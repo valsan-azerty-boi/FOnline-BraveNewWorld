@@ -3,10 +3,8 @@
 ## For people who need to quickly launch a FOnline server on linux
 
 ### Requirements : 
-- Linux (Debian 9+, Ubuntu, etc)
-- Mysql
-- Xvfb
-- Wine 
+- Linux (Debian 11+, Ubuntu, etc)
+- Wine
 
 ### Files to modify :
 - /Server/config/GetAccess.cfg => Set the admin password
