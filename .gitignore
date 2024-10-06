@@ -54,6 +54,8 @@ CrashDump*.txt
 /PReloaded/Client/logs/
 /PReloaded/Client/data/cache/
 /PReloaded/Client/fallout.dat
+/PReloaded/Client/critter.dat
+/PReloaded/Client/master.dat
 /PReloaded/Client/Mapper/*.log
 /PReloaded/Client/*cfg.bak
 
