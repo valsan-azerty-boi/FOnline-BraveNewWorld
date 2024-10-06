@@ -23,7 +23,7 @@ void InitializeGame()                  // Export
     __NoAnswerShuffle = true;
     __FixBoyDefaultExperience = 0;
     __SneakDivider = 6;
-    __LevelCap = 24;
+    __LevelCap = 99;
     __LevelCapAddExperience = false;
     __LookNormal = 20;
     __LookMinimum = 3;
@@ -121,7 +121,7 @@ void InitializeGame()                  // Export
     __DlgTalkMinTime = __DlgBarterMinTime = uint(-1) / 2; // becouse engine uses int when comparing with speech
     __GlobalMapMoveTime         = 250;
     __EncounterTime             = 4000;
-    __MinimumOfflineTime        = 180000;     // 3 minutes
+    __MinimumOfflineTime        = 30000;     // Default 180000 for 3 minutes
 
     // Range of values for client engine
     __AbsoluteOffsets = true;
