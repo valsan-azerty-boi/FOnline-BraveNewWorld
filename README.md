@@ -1,3 +1,19 @@
+# Fallout Online - Linux easy setup
+
+## For people who need to quickly launch a Fallout Online server on linux
+
+### Requirements : 
+- Linux (Debian 11+, Ubuntu, etc)
+- Wine
+
+### Files to modify :
+- /Server/config/GetAccess.cfg => Set the admin password
+- /Client/FOnline.cfg => set host adress and port
+
+### Use :
+- /Server/FOnlineServer.sh => Linux script to manage the server (start / stop / restart / monitor)
+- /Client/*.exe to play (You need fallout.dat / master.dat / critters.dat)
+
 # FOClassic + PReloaded + Brave New World update
 
 | | FOClassic | PReloaded | Brave New World update |
