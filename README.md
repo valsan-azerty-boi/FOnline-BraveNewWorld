@@ -1,18 +1,38 @@
-# Fallout Online - Linux easy setup
+# Fallout Online Server: A Linux Easysetup
+## For People Who Need to Quickly Launch a Fallout Online Server on Linux
 
-## For people who need to quickly launch a Fallout Online server on linux
-
-### Requirements : 
-- Linux (Debian 11+, Ubuntu, etc)
+### Requirements:
+- Linux (Debian 11+, Ubuntu, etc.)
 - Wine
 
-### Files to modify :
-- /PReloaded/Server/config/GetAccess.cfg => Set the admin password
-- /PReloaded/Client/FOnline.cfg => set host adress and port
+### Files to Modify:
+#### Server
+- **/PReloaded/Server/config/GetAccess.cfg** 
+  - Set an admin password for your server.
+- **/PReloaded/Server/FOnlineServer.sh** 
+  - Make this file executable with `chmod +x`. 
+- **/PReloaded/Server/FOnlineServerMonitorLoop.sh** 
+  - Make this file executable with `chmod +x`.
 
-### Use :
-- /PReloaded/Server/FOnlineServer.sh => Linux script to manage the server (start / stop / restart / monitor)
-- /PReloaded/Client/*.exe to play (You need fallout.dat / master.dat / critters.dat)
+#### Client
+- **/PReloaded/Client/*.dat** 
+  - Get "fallout.dat" | "master.dat" | "critter.dat" files from your legal Fallout 1 / Fallout 2 client. 
+- **/PReloaded/Client/FOnline.cfg** 
+  - Set the host address and port of the server.
+
+### Use:
+- **Start the Server**: Use the following command to start the server in background:
+  ```bash
+  ./FOnlineServer.sh start
+  ```
+- **Manage the Server**: The script allows for server management with options to stop, restart, or monitor:
+  ```bash
+  ./FOnlineServer.sh stop
+  ./FOnlineServer.sh restart
+  ./FOnlineServer.sh monitor
+  ```
+  - The ```monitor``` command is designed to ensure that your server remains operational at all times. It is recommended to set up this as a cron job (every 10 minutes, for example).
+
 
 # FOClassic + PReloaded + Brave New World update
 
