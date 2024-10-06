@@ -13,7 +13,7 @@ function start_server() {
     pkill -f "$SCRIPT_DIR/$EXECUTABLE"
     echo "Starting FOnlineServer."
     # ulimit -v $((MAX_RAM_MB))
-    nohup wine explorer /desktop=FOOnline,1024x768 "$SCRIPT_DIR/$EXECUTABLE" -start > /dev/null 2>&1 &
+    nohup wine explorer /desktop=FOOnline,1024x768 "$SCRIPT_DIR/$EXECUTABLE" --Start > /dev/null 2>&1 &
     disown
 }
 
