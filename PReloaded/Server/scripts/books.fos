@@ -75,7 +75,8 @@ void TryReadBook(Critter& cr, Item& book) { // Export
 
 	GameVar@ readAlreadyVar = GetLocalVar(readAlready, cr.Id);
 
-	if (skillNum == SK_REPAIR || skillNum == SK_SCIENCE || skillNum == SK_OUTDOORSMAN || skillNum == SK_BARTER) {
+	//  in case someone adds scavenging or gambling book, uncomment those lines and make a variable for it
+	if (skillNum == SK_REPAIR || skillNum == SK_SCIENCE || skillNum == SK_OUTDOORSMAN || skillNum == SK_BARTER /* || skillNum == SK_SCAVEGING || skillNum == SK_GAMBLING */) {
         if (valid(readAlreadyVar) && readAlreadyVar.GetValue() < BOOK_READ_LIMIT) {
             GainSkillXp(cr, skillNum, int(BOOK_READ_XP - CLAMP(readAlreadyVar.GetValue() + ((cr.Skill[skillNum] - 100) / 2), 0, 40)));
             cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,strNum);
@@ -139,23 +140,44 @@ void TryReadBook(Critter& cr, Item& book) { // Export
         _SubItem(book, 1);
 
         // validate skill
-        if (cr.Skill[SK_OUTDOORSMAN] > 175) {
-            cr.SkillBase[SK_OUTDOORSMAN] = 175;
+        int maxSkill = 200;
+        switch (skillNum) {
+            case SK_SMALL_GUNS:
+            case SK_BIG_GUNS:
+            case SK_ENERGY_WEAPONS:
+            case SK_UNARMED:
+            case SK_THROWING:
+            case SK_DOCTOR:
+            case SK_SNEAK:
+            case SK_TRAPS:
+                if(_CritIsTagSkill(cr, skillNum)) {
+                    maxSkill = 300;
+                } else {
+                    maxSkill = 200;
+                }
+                break;
+            //  active non specialization skills
+            case SK_FIRST_AID:
+            case SK_STEAL:
+            case SK_SPEECH:
+                maxSkill = 200;
+                break;
+            //  passive skills
+            case SK_LOCKPICK:
+            case SK_SCIENCE:
+            case SK_REPAIR:
+            case SK_BARTER:
+            case SK_GAMBLING:
+            case SK_SCAVENGING:
+            case SK_OUTDOORSMAN:
+                maxSkill = 200;
+                break;
+            default:
+                maxSkill = 200;
+                break;
         }
-        if (cr.Skill[SK_SCIENCE] > 125) {
-            cr.SkillBase[SK_SCIENCE] = 125;
-        }
-        if (cr.Skill[SK_REPAIR] > 125) {
-            cr.SkillBase[SK_REPAIR] = 125;
-        }
-        if (cr.Skill[SK_BARTER] > 150) {
-            cr.SkillBase[SK_BARTER] = 150;
-        }
-        if (cr.Skill[SK_FIRST_AID] > 200) {
-            cr.SkillBase[SK_FIRST_AID] = 200;
-        }
-        if (cr.Skill[SK_SMALL_GUNS] > 300) {
-                cr.SkillBase[SK_SMALL_GUNS] = 300;
+        if (cr.SkillBase[skillNum] > maxSkill) {
+            cr.SkillBase[skillNum] = maxSkill;
         }
 	} else {
         cr.SayMsg(SAY_NETMSG,TEXTMSG_GAME,STR_BOOK_READ_FAIL);
