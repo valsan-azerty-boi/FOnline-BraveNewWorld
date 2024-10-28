@@ -665,16 +665,27 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
                 dummyText += "|" + COLOR_DTEXT_BONUS + " Silent Death perk auto crit. ";
             }
         } else {
-            int critChanceFromAim = CLAMP(GetHitAim(aim), 0, 60);
-            int chance = cr.Stat[ST_CRITICAL_CHANCE] + margin / 10 + (critChanceFromAim * (35 + 4 * cr.Stat[ST_INTELLECT])) / 100 + attack.SelectWeaponBonus(BONUS_WEAPON_CRITICAL_CHANCE) - (target.Stat[ST_LUCK] / 2);
+            int critChanceFromAimStatFactor = cr.Trait[TRAIT_FAST_SHOT] != 0 ? (cr.Stat[ST_AGILITY] + cr.Stat[ST_LUCK]) : (cr.Stat[ST_INTELLECT] * 2);
+            int critChanceFromAim = (CLAMP(GetHitAim(aim), 0, 60) * (60 + 2 * critChanceFromAimStatFactor)) / 100;
+            int finesseAdjustForBurst = ((cr.Trait[TRAIT_FINESSE] != 0 && !isBurst) ? 10 : 0);
+            int chance = cr.Stat[ST_CRITICAL_CHANCE] - finesseAdjustForBurst + margin / 10 + critChanceFromAim + attack.SelectWeaponBonus(BONUS_WEAPON_CRITICAL_CHANCE) - (target.Stat[ST_LUCK] / 2);
             if (isDummyTraining) {
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " Base Crit Chance = |" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_CRITICAL_CHANCE];
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Margin/10 = |" + COLOR_DTEXT_BONUS + " " + margin / 10;
-                dummyText += "|" + COLOR_DTEXT_REGULAR + " , Aim bonus = |" + COLOR_DTEXT_BONUS + " " + ((critChanceFromAim * (35 + 4 * cr.Stat[ST_INTELLECT])) / 100);
+                if (finesseAdjustForBurst > 0) {
+                    dummyText += "|" + COLOR_DTEXT_REGULAR + " , No Finesse effect on burst (adjust) = |" + COLOR_DTEXT_MALUS + " " + (-1 * finesseAdjustForBurst);
+                }
+                dummyText += "|" + COLOR_DTEXT_REGULAR + " , Aim bonus = |" + COLOR_DTEXT_BONUS + " " + critChanceFromAim;
                 if (critChanceFromAim > 0) {
                     dummyText += "|" + COLOR_DTEXT_REGULAR + "  ( Aim(|" + COLOR_DTEXT_BONUS + " " + critChanceFromAim;
-                    dummyText += "|" + COLOR_DTEXT_REGULAR + " ) * (35 + 4 * IN(|" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_INTELLECT];
-                    dummyText += "|" + COLOR_DTEXT_REGULAR + " ) / 100 )";
+                    if (cr.Trait[TRAIT_FAST_SHOT] != 0) {
+                        dummyText += "|" + COLOR_DTEXT_REGULAR + " ) * (60 + 2 * (AG[|" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_AGILITY];
+                        dummyText += "|" + COLOR_DTEXT_REGULAR + " ] + LK[|" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_LUCK];
+                        dummyText += "|" + COLOR_DTEXT_REGULAR + " ]) ) / 100 )";
+                    } else {
+                        dummyText += "|" + COLOR_DTEXT_REGULAR + " ) * (60 + 4 * IN[|" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_INTELLECT];
+                        dummyText += "|" + COLOR_DTEXT_REGULAR + " ] / 100 )";
+                    }
                 }
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Weap bonus = |" + COLOR_DTEXT_BONUS + " " + attack.SelectWeaponBonus(BONUS_WEAPON_CRITICAL_CHANCE);
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Target LK/2 = |" + COLOR_DTEXT_MALUS + " -" + target.Stat[ST_LUCK] / 2;
@@ -700,7 +711,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
                 //  TODO: BNW: fixed a bug? (to be tested) this line was missing???
                 //addchance += usedArmor.Proto.Armor_CMCritChance;
 
-                if (cr.Trait[TRAIT_FINESSE] != 0) {
+                if (cr.Trait[TRAIT_FINESSE] != 0 && !isBurst) {
                     addchance -= usedArmor.Proto.Armor_CMCritChance / 4;
                     if (isDummyTraining) {
                         dummyText += "|" + COLOR_DTEXT_REGULAR + " , Finesse factor (25% ignore) = |" + COLOR_DTEXT_BONUS + " " + (-usedArmor.Proto.Armor_CMCritChance / 4);
@@ -1998,6 +2009,7 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     uint     extraMessage = 0;
     uint     extraMessageSelf = 0;
     bool     isShotgun = (valid(attack.Ammo) && (attack.Ammo.Ammo_Caliber == 11));
+    bool     isBurst = (rounds > 1);
 	//bool     isFireGeckoShell = (valid(attack.Ammo) && (attack.Ammo.ProtoId == PID_SHOTGUN_DRAGON_BREATH_SHELLS));
 	uint16   ammoPid = attack.ammoPid;
     if(valid(attack.Ammo)) ammoPid = attack.Ammo.ProtoId;
@@ -2903,7 +2915,7 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
             dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Target DR = |" + COLOR_DTEXT_BONUS + " " + targetDR;
         }
         //  I think this is so that Finesse doesn't affect DR when partial resist.
-        if (valid(attacker) && attacker.Trait[TRAIT_FINESSE] != 0) {
+        if (valid(attacker) && attacker.Trait[TRAIT_FINESSE] != 0 && !isBurst) {
             targetDR -= 30;
             if (isDummyTraining) {
                 dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Target DR Finesse DR adjust = |" + COLOR_DTEXT_BONUS + " -30";
@@ -2926,7 +2938,7 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
         }
 	}
 
-    if (validAttacker && attacker.Trait[TRAIT_FINESSE] != 0) {
+    if (validAttacker && attacker.Trait[TRAIT_FINESSE] != 0 && !isBurst) {
         targetDR += 30;
         partialBypassDR += 30;
         if (isDummyTraining) {
