@@ -73,7 +73,7 @@ class AttackStruct
     bool       TargetHit = false;
     bool       ShowHitAnimForce = false;
     ProtoItem@ Ammo = null;
-    bool       SilentDeathEffect = false;
+    bool       sneakAttack = false;
 	uint16     ammoPid;
 	uint16     weaponPid;
 	int8       weaponMode; // for swing/thrust melee weapons
@@ -224,17 +224,21 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     if(!map.IsTurnBased() && map.IsTurnBasedAvailability())
         map.BeginTurnBased(cr);
 
-    // Always unsneak
-    if(cr.Mode[MODE_HIDE] != 0)
-    {
-        if(!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT)
-            cr.ModeBase[MODE_HIDE] = 0;
+    // Always unsneak, except when SD and attacking NPC that dies instantly.
+    if (cr.Mode[MODE_HIDE] != 0) {
+        if (!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT) {
+            if (cr.IsPlayer() && cr.Perk[PE_SILENT_DEATH] != 0 && target.IsNpc()) {
+                //  this will be handled when we know if NPC died.
+            } else {
+                cr.ModeBase[MODE_HIDE] = 0;
+            }
+        }
         isSneak = true;
     }
 
-    if(!target.IsPlayer() || target.GetAccess() == ACCESS_CLIENT)
-
+    if (!target.IsPlayer() || target.GetAccess() == ACCESS_CLIENT) {
         target.ModeBase[MODE_HIDE] = 0;
+    }
 
     cr.SetDir(GetDirection(hx, hy, tx, ty));
 
@@ -357,11 +361,11 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     uint8 crDir = cr.Dir;
     uint8 tDir  = target.Dir;
 
-    if(isSneak && cr.Perk[PE_SILENT_DEATH] != 0 && (crDir == tDir || ((crDir + 1) % 6) == tDir || ((crDir + 5) % 6) == tDir) &&
+    if(isSneak && (crDir == tDir || ((crDir + 1) % 6) == tDir || ((crDir + 5) % 6) == tDir) &&
        !isGrenade &&
        (weaponSubtype != WS_GUN || realWeapon.Proto.Weapon_Anim1 == ANIM1_PISTOL || COMBAT_WEAPON_ALLOWS_SD(realWeapon))
        )
-        attack.SilentDeathEffect = true;
+        attack.sneakAttack = true;
 
 
     if(isHthAttack)
@@ -659,7 +663,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             if (isDummyTraining) {
                 dummyText += "|" + COLOR_DTEXT_BONUS + " Slayer perk auto crit. ";
             }
-        } else if (attack.SilentDeathEffect) {
+        } else if (attack.sneakAttack && cr.Perk[PE_SILENT_DEATH] != 0) {
             isCritical = true;
             if (isDummyTraining) {
                 dummyText += "|" + COLOR_DTEXT_BONUS + " Silent Death perk auto crit. ";
@@ -669,6 +673,12 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             int critChanceFromAim = (CLAMP(GetHitAim(aim), 0, 60) * (60 + 2 * critChanceFromAimStatFactor)) / 100;
             int finesseAdjustForBurst = ((cr.Trait[TRAIT_FINESSE] != 0 && !isBurst) ? 10 : 0);
             int chance = cr.Stat[ST_CRITICAL_CHANCE] - finesseAdjustForBurst + margin / 10 + critChanceFromAim + attack.SelectWeaponBonus(BONUS_WEAPON_CRITICAL_CHANCE) - (target.Stat[ST_LUCK] / 2);
+            int sneakAttackBonus = 0;
+            if (attack.sneakAttack && cr.Perk[PE_SILENT_DEATH] == 0) {
+                int distance = GetDistantion(cr.HexX, cr.HexY, target.HexX, target.HexY);
+                sneakAttackBonus = 5 + CLAMP((18 - distance) * 2, 0, 30);
+                chance += sneakAttackBonus;
+            }
             if (isDummyTraining) {
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " Base Crit Chance = |" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_CRITICAL_CHANCE];
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Margin/10 = |" + COLOR_DTEXT_BONUS + " " + margin / 10;
@@ -686,6 +696,9 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
                         dummyText += "|" + COLOR_DTEXT_REGULAR + " ) * (60 + 4 * IN[|" + COLOR_DTEXT_BONUS + " " + cr.Stat[ST_INTELLECT];
                         dummyText += "|" + COLOR_DTEXT_REGULAR + " ] / 100 )";
                     }
+                }
+                if (sneakAttackBonus > 0) {
+                    dummyText += "|" + COLOR_DTEXT_REGULAR + " , Sneak attack crit. bonus (5 + (18 - distance) * 2) = |" + COLOR_DTEXT_BONUS + " " + sneakAttackBonus;
                 }
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Weap bonus = |" + COLOR_DTEXT_BONUS + " " + attack.SelectWeaponBonus(BONUS_WEAPON_CRITICAL_CHANCE);
                 dummyText += "|" + COLOR_DTEXT_REGULAR + " , Target LK/2 = |" + COLOR_DTEXT_MALUS + " -" + target.Stat[ST_LUCK] / 2;
@@ -2032,6 +2045,11 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     int bypassRoll = 0;
     uint bypassValue = 0;
 
+    bool attackFront = true;
+    uint dir = GetDirection(attack.Hx, attack.Hy, target.HexX, target.HexY);
+    if((dir == target.Dir || ((dir + 1) % 6) == target.Dir || ((dir + 5) % 6) == target.Dir))
+        attackFront = false;
+
 	array<int>	_dmgMul;
 	_dmgMul.resize(rounds);
 	for (uint i = 0; i < rounds; i++) {
@@ -2233,10 +2251,28 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
                     }
                 }
             }
-            if (attack.SilentDeathEffect) {
-                roll += 10;
-                if (isDummyTraining) {
-                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death perk = |" + COLOR_DTEXT_BONUS + " 10";
+            if (attack.sneakAttack) {
+                //  Silent Death effect
+                if (attacker.Perk[PE_SILENT_DEATH] != 0) {
+                    int distance = GetDistantion(attacker.HexX, attacker.HexY, target.HexX, target.HexY);
+                    int sdBonus = 15 + CLAMP((18 - distance) * 3, 0, 45);
+                    if (!targetIsPlayer && !isDummyTraining) {
+                        sdBonus *= 2;
+                    }
+                    roll += sdBonus;
+                    if (isDummyTraining) {
+                        dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death perk Crit Power bonus (15 + (18 - distance) * 3) = |" + COLOR_DTEXT_BONUS + " " + sdBonus;
+                    }
+                } else {
+                    int distance = GetDistantion(attacker.HexX, attacker.HexY, target.HexX, target.HexY);
+                    int sneakAttackBonus = 5 + CLAMP((18 - distance), 0, 15);
+                    if (!targetIsPlayer && !isDummyTraining) {
+                        sneakAttackBonus *= 2;
+                    }
+                    roll += sneakAttackBonus;
+                    if (isDummyTraining) {
+                        dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Sneak attack Crit Power bonus (5 + (18 - distance)) = |" + COLOR_DTEXT_BONUS + " " + sneakAttackBonus;
+                    }
                 }
             }
         }
@@ -3519,11 +3555,6 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
             AddScore(attacker, SCORE_UNARMED_DAMAGE, totalDmg);
     }
 
-    bool attackFront = true;
-    uint dir = GetDirection(attack.Hx, attack.Hy, target.HexX, target.HexY);
-    if((dir == target.Dir || ((dir + 1) % 6) == target.Dir || ((dir + 5) % 6) == target.Dir))
-        attackFront = false;
-
     int   armorDr = target.GetDR(dmgType, attack.AimHead);
     Item@ armor_ = _GetCritterArmor(target, attack.AimHead);
 
@@ -3837,6 +3868,8 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     // Damage
     else if(!(target.IsKnockout() || FLAG(target.Mode[MODE_EXT], MODE_EXT_NO_HIT_ANIM)))
     {
+        //  here we need to disable sneak, because of new mechanics of SD
+        attacker.ModeBase[MODE_HIDE] = 0;
         // Animate hit
         if(attack.ShowHitAnimForce)
             target.Action(CRITTER_ACTION_DAMAGE_FORCE, attackFront ? 0 : 1, null);

@@ -82,7 +82,7 @@ shared class AttackStruct
     bool       TargetHit = false;
     bool       ShowHitAnimForce = false;
     ProtoItem@ Ammo = null;
-    bool       SilentDeathEffect = false;
+    bool       sneakAttack = false;
 	uint16     ammoPid;
 	uint16     weaponPid;
 	int8       weaponMode; // for swing/thrust melee weapons
