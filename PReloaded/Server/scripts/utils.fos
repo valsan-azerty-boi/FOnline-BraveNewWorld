@@ -3122,3 +3122,74 @@ bool isOnFriendList(Critter@ crFrom, Critter@ crTo) {
     }
     return false;
 }
+
+int getWeaponSizeRank(ProtoItem& item) {
+    int weaponRank = HEX_BURST_WEAPON_RANK_UNRANKED;
+    if (!valid(item)) {
+        return weaponRank;
+    }
+
+    int skill = item.Weapon_Skill_0;
+    //Log("SKILL = " + SkillName(skill) + " (" + skill + ")");
+    switch (skill) {
+        case SK_UNARMED:
+        case SK_THROWING:
+            weaponRank = HEX_BURST_WEAPON_RANK_MELEE;
+            break;
+        case SK_SMALL_GUNS:
+            weaponRank = HEX_BURST_WEAPON_RANK_MEDIUM;
+            break;
+        case SK_ENERGY_WEAPONS:
+            weaponRank = HEX_BURST_WEAPON_RANK_MEDIUM;
+            break;
+        case SK_BIG_GUNS:
+            weaponRank = HEX_BURST_WEAPON_RANK_HEAVY;
+            break;
+    }
+
+    uint itemPid = item.ProtoId;
+    switch (itemPid) {
+        //  small weapons or point blank burst weapons, like SMG's - need to set these here
+        case PID_10MM_SMG:
+        case PID_HK_P90C:
+        case PID_GREASE_GUN:
+        case PID_HK_G11:
+        case PID_HK_G11E:
+        case PID_10MM_PISTOL:
+        case PID_14MM_PISTOL:
+        case PID_9MM_MAUSER:
+        case PID_DESERT_EAGLE:
+        case PID_DESERT_EAGLE_EXT_MAG:
+        case PID_223_PISTOL:
+        case PID_44_MAGNUM_REVOLVER:
+        case PID_44_MAGNUM_SPEEDLOADER:
+        case PID_NEEDLER_PISTOL:
+        case PID_ZIP_GUN:
+        case PID_PK12_GAUSS_PISTOL:
+        //  small energy
+        case PID_LASER_PISTOL:
+        case PID_MAGNETO_LASER_PISTOL:
+        case PID_PLASMA_PISTOL:
+        case PID_PLASMA_PISTOL_EXT_CART:
+        case PID_ALIEN_LASER_PISTOL:
+        case PID_YK32_PULSE_PISTOL:
+        case PID_SOLAR_SCORCHER:
+        case PID_PHAZER:
+        case PID_LASER_SMG:
+            weaponRank = HEX_BURST_WEAPON_RANK_LIGHT;
+            break;
+
+        //  medium sized weapons, need to set Flamer here, else they would fall into heavy category
+        case PID_FLAMER:
+        case PID_IMPROVED_FLAMETHROWER:
+            weaponRank = HEX_BURST_WEAPON_RANK_MEDIUM;
+            break;
+
+        //  big guns, even if energy weapons
+        case PID_GATLING_LASER:
+            weaponRank = HEX_BURST_WEAPON_RANK_HEAVY;
+            break;
+    }
+    return weaponRank;
+}
+

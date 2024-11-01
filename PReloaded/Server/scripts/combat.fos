@@ -1005,9 +1005,9 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
         map.GetCrittersPath(hx, hy, tx, ty, 0.0f, wpnMaxDist, FIND_LIFE_AND_KO, lineCentral);
         int             bl;
 
-        bool            threeLines = true;
+        bool            threeLinesFlamer = true;
 
-        for(int lineCount = 0, lineMax = (threeLines ? 1 : 3); lineCount < lineMax; lineCount++)
+        for(int lineCount = 0, lineMax = (threeLinesFlamer ? 1 : 3); lineCount < lineMax; lineCount++)
         {
             // Central line of fire
             bl = 0;           // No blockers
@@ -1077,7 +1077,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             // Central line of fire end
         }
 
-        if(threeLines)
+        if(threeLinesFlamer)
         {
             uint8  leftDir = GetOffsetDir(hx, hy, tx, ty, 89.0f);
             uint16 sx = hx;
@@ -1453,23 +1453,62 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
         ////////////////////////
         ////    1-hexing    ////
 
-        ////    only specific weapons
-        bool threeLines = !isNoSpread;   // weapon not shotgun-like
+        ////    based on weapon size compared attacker to target, smaller or same will 1-hex, heavier will not 1-hex
+        bool threeLinesBurst = true;
         if (shotDist == 1) {
-            if ((weapPid == PID_10MM_SMG) || (weapPid == PID_HK_P90C) || (weapPid == PID_GREASE_GUN) || (weapPid == PID_TOMMY_GUN)
-                    || (weapPid == PID_HK_G11) || (weapPid == PID_HK_G11E) || (weapPid == PID_LASER_SMG)) {
-                threeLines = false;
+            int attackerWeaponRank = getWeaponSizeRank(weapon);
+            //Log("ATTACKER WEAPON RANK = " + attackerWeaponRank);
+
+            int targetWeaponRank = HEX_BURST_WEAPON_RANK_MELEE;
+            Item@ targetWeapon = _CritGetItemHand(target);
+            if (valid(targetWeapon)) {
+                targetWeaponRank = getWeaponSizeRank(targetWeapon.Proto);
+            }
+            //Log("TARGET WEAPON RANK = " + targetWeaponRank);
+
+            if (attackerWeaponRank == HEX_BURST_WEAPON_RANK_UNRANKED) {
+                threeLinesBurst = true;
+            } else if (targetWeaponRank == HEX_BURST_WEAPON_RANK_UNRANKED) {
+                threeLinesBurst = false;
+            } else {
+            //  Attacking with lighter or equal burst weapon than what target has
+                if (attackerWeaponRank <= targetWeaponRank) {
+                    threeLinesBurst = false;
+                }
+                //  Attacking from the back can also 1-hex
+                bool attackFront = true;
+                uint dir = GetDirection(attack.Hx, attack.Hy, target.HexX, target.HexY);
+                if ((dir == target.Dir || ((dir + 1) % 6) == target.Dir || ((dir + 5) % 6) == target.Dir))
+                    attackFront = false;
+                if (!attackFront) {
+                    threeLinesBurst = false;
+                }
+                //  Target is KO
+                if (target.IsKnockout()) {
+                    threeLinesBurst = false;
+                }
+                //  Target has crippled arms
+                if (target.Damage[DAMAGE_EYE] > 0 || target.Damage[DAMAGE_LEFT_ARM] > 0 || target.Damage[DAMAGE_RIGHT_ARM] > 0
+                    || target.Damage[DAMAGE_LEFT_LEG] > 0 || target.Damage[DAMAGE_RIGHT_LEG] > 0)
+                {
+                    threeLinesBurst = false;
+                }
             }
         }
+        // weapon is shotgun-like (Bozar, LSW, FN FAL, all shotguns)
+        if (isNoSpread) {
+            threeLinesBurst = false;
+        }
+
         ////
 
         ////    use this to 1-hex with every weapon, and remove above
-        //  bool threeLines = shotDist > 1 ? !isNoSpread : false;   // target not adjacent and weapon not shotgun-like -> use three lines, otherwise 1-hex with every weapon
+        //  bool threeLinesBurst = shotDist > 1 ? !isNoSpread : false;   // target not adjacent and weapon not shotgun-like -> use three lines, otherwise 1-hex with every weapon
 
         /////////////////////////////
 
         // Already shot: MAX(rounds/6,1);
-        for(int lineCount = 0, lineMax = (threeLines ? 1 : 3); lineCount < lineMax; lineCount++)
+        for(int lineCount = 0, lineMax = (threeLinesBurst ? 1 : 3); lineCount < lineMax; lineCount++)
         {
             // Rounds for central stack
             if(lineCount == 0)
@@ -1577,7 +1616,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             // Central line end
         }
 
-        if(threeLines)
+        if(threeLinesBurst)
         {
             // Rounds for the left stack
             volleyRounds = (rounds + 1) * 10 / sideMod;
