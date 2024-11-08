@@ -1106,7 +1106,12 @@ bool ScriptBind::RegisterAll( asIScriptEngine* engine, const uint8& app )
         RegisterObjectMethod( engine, "Critter", "void EraseHolodiskInfo(uint holodiskNum)", focFUNCTION( BIND_CLASS Crit_EraseHolodiskInfo ), asCALL_CDECL_OBJFIRST );
         RegisterObjectMethod( engine, "Critter", "bool IsHolodiskInfo(uint holodiskNum) const", focFUNCTION( BIND_CLASS Crit_IsHolodiskInfo ), asCALL_CDECL_OBJFIRST );
 
-        RegisterObjectMethod( engine, "Critter", "bool IsLife() const", focFUNCTION( BIND_CLASS Crit_IsLife ), asCALL_CDECL_OBJFIRST );
+		RegisterObjectMethod(engine, "Critter", "int GetPlayerCurrentAction()", focFUNCTION(BIND_CLASS Crit_GetPlayerCurrentAction), asCALL_CDECL_OBJFIRST);
+		RegisterObjectMethod(engine, "Critter", "bool IsMoving()", focFUNCTION(BIND_CLASS Crit_IsMoving), asCALL_CDECL_OBJFIRST);
+		RegisterObjectMethod(engine, "Critter", "bool IsWalking()", focFUNCTION(BIND_CLASS Crit_IsWalking), asCALL_CDECL_OBJFIRST);
+		RegisterObjectMethod(engine, "Critter", "bool IsRunning()", focFUNCTION(BIND_CLASS Crit_IsRunning), asCALL_CDECL_OBJFIRST);
+
+		RegisterObjectMethod( engine, "Critter", "bool IsLife() const", focFUNCTION( BIND_CLASS Crit_IsLife ), asCALL_CDECL_OBJFIRST );
         RegisterObjectMethod( engine, "Critter", "bool IsKnockout() const", focFUNCTION( BIND_CLASS Crit_IsKnockout ), asCALL_CDECL_OBJFIRST );
         RegisterObjectMethod( engine, "Critter", "bool IsDead() const", focFUNCTION( BIND_CLASS Crit_IsDead ), asCALL_CDECL_OBJFIRST );
         RegisterObjectMethod( engine, "Critter", "bool IsFree() const", focFUNCTION( BIND_CLASS Crit_IsFree ), asCALL_CDECL_OBJFIRST );

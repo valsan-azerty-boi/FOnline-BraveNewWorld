@@ -581,7 +581,11 @@ public:
         static bool          Crit_TransitToGlobal( Critter* cr, bool request_group );
         static bool          Crit_TransitToGlobalWithGroup( Critter* cr, ScriptArray& group );
         static bool          Crit_TransitToGlobalGroup( Critter* cr, uint critter_id );
-        static bool          Crit_IsLife( Critter* cr );
+		static int			 Crit_GetPlayerCurrentAction(Critter* cr);
+		static bool			 Crit_IsMoving(Critter* cr);
+		static bool			 Crit_IsWalking(Critter* cr);
+		static bool			 Crit_IsRunning(Critter* cr);
+		static bool          Crit_IsLife( Critter* cr );
         static bool          Crit_IsKnockout( Critter* cr );
         static bool          Crit_IsDead( Critter* cr );
         static bool          Crit_IsFree( Critter* cr );

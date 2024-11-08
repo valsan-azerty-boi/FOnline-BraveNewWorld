@@ -1826,6 +1826,36 @@ bool FOServer::SScriptFunc::Crit_TransitToGlobalGroup( Critter* cr, uint critter
     return true;
 }
 
+int FOServer::SScriptFunc::Crit_GetPlayerCurrentAction(Critter* cr)
+{
+	if (cr->IsNotValid)
+		SCRIPT_ERROR_R0("This nullptr.");
+	return cr->GetCurrentAction();
+}
+
+bool FOServer::SScriptFunc::Crit_IsMoving(Critter* cr)
+{
+	if (cr->IsNotValid)
+		SCRIPT_ERROR_R0("This nullptr.");
+	uint tick = Timer::GameTick();
+	//WriteLog("Critter::Crit_IsMoving - \t%s:\t gameTick = %u, PrevHexTick = %u", cr->GetName(), tick, cr->PrevHexTick);
+	return (int)tick - (int)(cr->PrevHexTick) < 400;
+}
+
+bool FOServer::SScriptFunc::Crit_IsWalking(Critter* cr)
+{
+	if (cr->IsNotValid)
+		SCRIPT_ERROR_R0("This nullptr.");
+	return Crit_IsMoving(cr) && !cr->IsRuning;
+}
+
+bool FOServer::SScriptFunc::Crit_IsRunning(Critter* cr)
+{
+	if (cr->IsNotValid)
+		SCRIPT_ERROR_R0("This nullptr.");
+	return Crit_IsMoving(cr) && cr->IsRuning;
+}
+
 bool FOServer::SScriptFunc::Crit_IsLife( Critter* cr )
 {
     if( cr->IsNotValid )
