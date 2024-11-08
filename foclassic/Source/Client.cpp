@@ -7777,7 +7777,7 @@ void FOClient::CrittersProcess()
     }
 
 	if (Chosen->IsWalkAnim()) {
-		WriteLog("FOClient::CrittersProcess - WALK ANIM \tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration);
+		//WriteLog("FOClient::CrittersProcess - WALK ANIM \tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration);
 		// Ap regeneration while running or walking
 		if (Chosen->GetParam(ST_CURRENT_AP) < Chosen->GetParam(ST_ACTION_POINTS) && !IsTurnBased)
 		{
@@ -7803,7 +7803,7 @@ void FOClient::CrittersProcess()
 							Chosen->Params[ST_CURRENT_AP] = max_ap;
 					}
 					Chosen->ApRegenerationTick = tick;
-					WriteLog("FOClient::CrittersProcess - REGEN TICKED WALK\tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u, regenFactor = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration, regenFactor);
+					//WriteLog("FOClient::CrittersProcess - REGEN TICKED WALK\tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u, regenFactor = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration, regenFactor);
 				}
 			}
 		}
