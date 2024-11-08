@@ -251,7 +251,7 @@ void unsafe_HexShot(Critter& player, int px, int py, int p2, string@ param3, arr
 
 }
 
-void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty)
+void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost = false)
 {
     uint8 dir = GetDirection(cr.HexX, cr.HexY, tx, ty);
     cr.SetDir(dir);
@@ -262,7 +262,11 @@ void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty)
             cr.ModeBase[MODE_HIDE] = 0;
     }
     cr.Wait(__Breaktime);
-    cr.StatBase[ST_CURRENT_AP] -= 100 * HexShotActionPointsCost(item, cr);
+    if (!ignoreApCost) {
+        cr.StatBase[ST_CURRENT_AP] -= 100 * HexShotActionPointsCost(item, cr);
+    }
+
+    uint dist = GetDistantion(cr.HexX, cr.HexY, tx, ty);
 
     map.RunFlyEffect(_WeaponEffect(item.Proto, item.Mode), cr, null, cr.HexX, cr.HexY, tx, ty);
 
@@ -272,8 +276,12 @@ void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty)
         _SetTimeout(cr, TO_BATTLE, __TimeoutBattle);
     if(!map.IsTurnBased() && map.IsTurnBasedAvailability())
         map.BeginTurnBased(cr);
-    uint[] values = { map.Id, tx, ty, pid, cr.Id, item.AmmoPid};
-    CreateTimeEvent(AFTER(REAL_SECOND(0)), "e_HexShotExplode", values, false);
+
+
+    uint[] values2 = { map.Id, tx, ty, pid, cr.Id, item.AmmoPid };
+    uint animationTimeToWait = 35 * dist + 0;
+    CreateTimeEvent(AFTER(REAL_MS(animationTimeToWait)), "e_HexShotExplode", values2, false);
+
     item.AmmoCount -= 1;
     item.Update();
 }

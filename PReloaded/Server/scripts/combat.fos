@@ -45,6 +45,8 @@ import void QuakeScreen(Map& map) from "effects";
 import void WearItem(Critter& cr, Item& item, int wearCount) from "repair";
 import void WearHandsOnDeath(Critter& cr) from "repair";
 import void SetMinWear(Item& item, int wearProcent) from "repair";
+import void CommenceHexThrowing(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost) from "hexThrow";
+import void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost) from "hexShot";
 
 /*
 class AttackStruct
@@ -191,6 +193,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     bool             useNormal = false;   // Used to change target during RunFlyEffect
     bool             useHex = false;      // Used to change end hex of RunFlyEffect, i.e. for thrown weapons and rockets.
     Critter@         normalTarget;        // Used as a target for weapon animations;
+    bool targetNoDodgeAnimation = false;    //  Used to disable dodge animation on target for hex attack types, like rocket, grenades
 
     //  BNW changes, to be able to have some training info, to make the dummy more useful, only allow for player and if critter is a training dummy
     //  may add option later to disable this verbose message at the dummy dialog?
@@ -361,11 +364,11 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     uint8 crDir = cr.Dir;
     uint8 tDir  = target.Dir;
 
-    if(isSneak && (crDir == tDir || ((crDir + 1) % 6) == tDir || ((crDir + 5) % 6) == tDir) &&
-       !isGrenade &&
-       (weaponSubtype != WS_GUN || realWeapon.Proto.Weapon_Anim1 == ANIM1_PISTOL || COMBAT_WEAPON_ALLOWS_SD(realWeapon))
-       )
+    if (isSneak && (crDir == tDir || ((crDir + 1) % 6) == tDir || ((crDir + 5) % 6) == tDir) &&
+            !isGrenade && (weaponSubtype != WS_GUN || realWeapon.Proto.Weapon_Anim1 == ANIM1_PISTOL || COMBAT_WEAPON_ALLOWS_SD(realWeapon)) )
+    {
         attack.sneakAttack = true;
+    }
 
 
     if(isHthAttack)
@@ -564,6 +567,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             dummyInfo += "|" + COLOR_DTEXT_MALUS + "  :: Miss";
         }
     }
+
     // If missed
     if (margin < 0) {
         // Not setting isHit, we try a critical failure
@@ -1839,20 +1843,53 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
             NotifyMiss(cr, results);
     }
 	// Burst attack end
-
     else if(isRocket || (weaponSubtype == WS_THROWING))   // ROCKETS, THROWING
     {
         bool exploding = isRocket || isGrenade;
 
-        if(isHit || changedTarget)
-        {
-            if(exploding)
-                CommenceExplosion(attack, map, tx, ty, realTarget, weapPid, criticalHit, realTarget.Id, isRocket, results, isExplodeRocket);
-            else
+        if (isHit || changedTarget) {
+            if (exploding) {
+                targetNoDodgeAnimation = true;
+                //CommenceExplosion(attack, map, tx, ty, realTarget, weapPid, criticalHit, realTarget.Id, isRocket, results, isExplodeRocket);
+                if (isRocket) {
+                    //realTarget.Say(SAY_NORM, "IsMoving() = " + cr.IsMoving() + ", IsRunning() = " + cr.IsRunning());
+                    if (realTarget.IsMoving()) {
+                        uint16 predictedToX = realTarget.HexX;
+                        uint16 predictedToY = realTarget.HexY;
+                        int predictDistance = 0;
+                        if (realTarget.IsRunning()) {
+                            predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 0) / 10;
+                        } else {
+                            predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 5) / 20;
+                        }
+                        //cr.Say(SAY_NORM, "Predict Adjust = " + predictDistance + ", Distance = " + GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY));
+                        map.MoveHexByDir(predictedToX, predictedToY, realTarget.Dir, predictDistance);
+                        CommenceHexShoting(cr, map, realWeapon, predictedToX, predictedToY, true);
+                    } else {
+                        CommenceHexShoting(cr, map, realWeapon, tx, ty, true);
+                    }
+                } else {
+                    //realTarget.Say(SAY_NORM, "IsMoving() = " + cr.IsMoving() + ", IsRunning() = " + cr.IsRunning());
+                    if (realTarget.IsMoving()) {
+                        uint16 predictedToX = realTarget.HexX;
+                        uint16 predictedToY = realTarget.HexY;
+                        int predictDistance = 0;
+                        if (realTarget.IsRunning()) {
+                            predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 3) / 5;
+                        } else {
+                            predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 5) / 16;
+                        }
+                        //cr.Say(SAY_NORM, "Predict Adjust = " + predictDistance + ", Distance = " + GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY));
+                        map.MoveHexByDir(predictedToX, predictedToY, realTarget.Dir, predictDistance);
+                        CommenceHexThrowing(cr, map, realWeapon, predictedToX, predictedToY, true);
+                    } else {
+                        CommenceHexThrowing(cr, map, realWeapon, tx, ty, true);
+                    }
+                }
+            } else {
                 ApplyDamage(attack, realTarget, 1, criticalHit, !changedTarget, results, 0);
-        }
-        else
-        {
+            }
+        } else {
             // Miss with missiles
             attack.set_Aim(HIT_LOCATION_UNCALLED);
 
@@ -1933,49 +1970,48 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
                 }
             }
 
-            if(anyHit)
-            {
+            if (anyHit) {
                 NotifyOops(cr, target, normalTarget, results);
                 useNormal = true;
 
-                if(exploding)
-                    CommenceExplosion(attack, map, tx, ty, normalTarget, weapPid, false, realTarget.Id, isRocket, results, isExplodeRocket);
-                else
+                if (exploding) {
+                    //CommenceExplosion(attack, map, tx, ty, normalTarget, weapPid, false, realTarget.Id, isRocket, results, isExplodeRocket);
+                    targetNoDodgeAnimation = true;
+                    if (isRocket) {
+                        CommenceHexShoting(cr, map, realWeapon, tx, ty, true);
+                    } else {
+                        CommenceHexThrowing(cr, map, realWeapon, tx, ty, true);
+                    }
+                } else {
                     ApplyDamage(attack, normalTarget, 1, false, false, results, 0);
-            }
-            else
-            {
+                }
+            } else {
                 useHex = true;
                 NotifyMiss(cr, results);
-                if(isGrenade)
-                {
+                if (isGrenade) {
                     tx = realTarget.HexX;
                     ty = realTarget.HexY;
                     int newdist = GetDistantion(hx, hy, tx, ty) + 1;
                     map.MoveHexByDir(tx, ty, Random(0, 5), Random(1, newdist / 2));
                     newdist = GetDistantion(hx, hy, tx, ty);
                     map.GetCrittersPath(hx, hy, tx, ty, 0.0f, newdist, FIND_LIFE, null, tx, ty, bx, by);
-                }
-                else
-                {
-                    if(isRocket)
-                    {
+                } else {
+                    if (isRocket) {
                         tx = bx;
                         ty = by;
                         int newdist = GetDistantion(hx, hy, tx, ty) + 1;
                         map.MoveHexByDir(tx, ty, Random(0, 5), Random(1, newdist / 2));
                         newdist = GetDistantion(hx, hy, tx, ty);
                         map.GetCrittersPath(hx, hy, tx, ty, 0.0f, newdist, FIND_LIFE, null, tx, ty, bx, by);
-                    }
-                    else
-                    {
+                    } else {
                         tx = pbx;
                         ty = pby;
                     }
                 }
 
-                if(exploding)
+                if (exploding) {
                     CommenceExplosion(attack, map, tx, ty, null, weapPid, false, realTarget.Id, isRocket, results, isExplodeRocket);
+                }
             }
         }         // Miss
     }
@@ -1988,12 +2024,22 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     // Stuff like animations and effects
 
     // Shoot
-    if(_WeaponEffect(weapon, use) != 0)
-    {
-        if(useHex)
+    if(_WeaponEffect(weapon, use) != 0) {
+        if(useHex) {
             map.RunFlyEffect(_WeaponEffect(weapon, use), cr, null, hx, hy, tx, ty);      // yeah, the target can be null (see: grenades, rocket launcher)
-        else
-            map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
+        } else {
+            //  this is covered when we converted all rocket/grenade attacks to hex attacks
+            /*
+            Log("NOT useHex - RunFlyEffect");
+            if (isRocket) {
+                map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
+            } else {
+                uint dist = GetDistantion(cr.HexX, cr.HexY, tx, ty);
+                uint[] values = { map.Id, cr.Id, (useNormal ? normalTarget.Id : realTarget.Id), _WeaponEffect(weapon, use), hx, hy, tx, ty };
+                CreateTimeEvent(AFTER(REAL_MS(200)), "hexThrow@e_HexThrowFlyCritter", values, false);
+            }
+            */
+        }
     }
 
     if(ammoRound > 0 && valid(realWeapon) && cr.Mode[MODE_UNLIMITED_AMMO] == 0)
@@ -2034,9 +2080,8 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     }
 
     // Npc miss text
-    if(!attack.TargetHit)
-    {
-        if(!target.IsPlayer())
+    if (!attack.TargetHit && !targetNoDodgeAnimation) {
+        if (!target.IsPlayer())
             AI_TrySayCombatText(target, COMBAT_TEXT_MISS);
         target.Action(CRITTER_ACTION_DODGE, 0, null);       // Todo: type front/back
     }
@@ -2185,8 +2230,9 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     if(target.IsDead() || !valid(map))
         return;
 
-    if(validAttacker && intentionally && target.Id != attack.TargetId)
+    if (validAttacker && intentionally && target.Id != attack.TargetId) {
         target.EventAttacked(attacker);
+    }
 
     // check if hit
     if(target.Id == attack.TargetId)
@@ -3085,6 +3131,22 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
         if (isDummyTraining && attack.DMMod != 1) {
             dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Attack dmg mod = |" + (attack.DMMod > 0 ? COLOR_DTEXT_BONUS : COLOR_DTEXT_MALUS) + " " + attack.DMMod;
         }
+
+        if (target.IsNpc() && attack.sneakAttack) {
+            //  Silent Death effect
+            if (attacker.Perk[PE_SILENT_DEATH] != 0) {
+                rawDmg *= 3;
+                if (isDummyTraining) {
+                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " 3";
+                }
+            } else {
+                rawDmg *= 1.5;
+                if (isDummyTraining) {
+                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Sneak Attack dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " 1.5";
+                }
+            }
+        }
+
 		rawDmg *= _dmgMul[i];
         rawDmg /= dmgDiv;
         if (isDummyTraining && dmgDiv != 1) {
@@ -3910,7 +3972,7 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
         //  here we need to disable sneak, because of new mechanics of SD
         attacker.ModeBase[MODE_HIDE] = 0;
         // Animate hit
-        if(attack.ShowHitAnimForce)
+        if (attack.ShowHitAnimForce)
             target.Action(CRITTER_ACTION_DAMAGE_FORCE, attackFront ? 0 : 1, null);
         else
             target.Action(CRITTER_ACTION_DAMAGE, attackFront ? 0 : 1, null);
@@ -4081,13 +4143,10 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
         attacker.Say(SAY_NETMSG, dummyInfo);
     }
 
-
     PostDamage(target);
 }
 
-
-void CommenceExplosion(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Critter@ target, uint weapPid, bool isCritical, uint intentionallyId, bool isRocket, array<CombatRes>& results, bool isExplodeRocket)
-{
+void CommenceExplosion(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Critter@ target, uint weapPid, bool isCritical, uint intentionallyId, bool isRocket, array<CombatRes>& results, bool isExplodeRocket) {
     uint radius = 2;
     if(isRocket) radius = isExplodeRocket?4:3;
 
@@ -4097,20 +4156,21 @@ void CommenceExplosion(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Cri
     else if(weapPid == PID_FIRE_GRENADE || weapPid == PID_FAKE_FIRE_GRENADE)
         radius = 3;
 
-    if(weapPid == PID_MOLOTOV_COCKTAIL || weapPid == PID_FIRE_GRENADE || weapPid == PID_FAKE_FIRE_GRENADE)
+    if (weapPid == PID_MOLOTOV_COCKTAIL || weapPid == PID_FIRE_GRENADE || weapPid == PID_FAKE_FIRE_GRENADE) {
         map.RunEffect(PID_EXPLODE_FIRE_BIG, tx, ty, 2);
-    else if(weapPid == PID_FRAG_GRENADE || weapPid == PID_HOLY_HAND_GRENADE)
+    } else if (weapPid == PID_FRAG_GRENADE || weapPid == PID_HOLY_HAND_GRENADE) {
         map.RunEffect(PID_EXPLODE_FIRE_SMALL, tx, ty, 2);
-    else if(weapPid == PID_PULSE_GRENADE)
+    } else if (weapPid == PID_PULSE_GRENADE) {
         map.RunEffect(PID_EXPLODE_EMP, tx, ty, 2);
-    else if(weapPid == PID_PLASMA_GRENADE || weapPid == PID_FAKE_PLASMA_GRENADE)
+    } else if (weapPid == PID_PLASMA_GRENADE || weapPid == PID_FAKE_PLASMA_GRENADE) {
         map.RunEffect(PID_EXPLODE_PLASMA, tx, ty, 2);
-    else if(isRocket)
+    } else if (isRocket) {
         map.RunEffect(PID_EXPLODE_ROCKET, tx, ty, 1);
-    else if(weapPid == PID_DYNACORD)
+    } else if (weapPid == PID_DYNACORD) {
         map.RunEffect(PID_EXPLODE_FIRE_BIG, tx, ty, 3);
-    else
+    } else {
         map.RunEffect(PID_EXPLODE_FIRE_BIG, tx, ty, 2);   // default case
+    }
 
     // Explosion sound. this could use some rework.
     string     soundName = "WHN1XXX1.ACM";

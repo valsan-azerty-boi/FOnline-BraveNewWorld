@@ -542,8 +542,7 @@ uint loop()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Call when critter attack another.
-void critter_attack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo)
-{
+void critter_attack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo) {
     CombatAttack(cr, target, weapon, weaponMode, ammo);
 }
 
@@ -592,8 +591,15 @@ void critter_attacked(Critter& cr, Critter& attacker)
         else
             TryReportOffense(cr, attacker, REP_ATK_PENALTY * MAX(1, _GroupRank(cr)));
     }
-    if(!cr.IsPlayer() && (!_IsTrueNpc(attacker) || (crGroup != attackerGroup)))
-        AddAttackPlane(cr, 0, attacker);
+
+    if (!cr.IsPlayer() && (!_IsTrueNpc(attacker) || (crGroup != attackerGroup))) {
+        if (attacker.IsPlayer() && attacker.Perk[PE_SILENT_DEATH] > 0 && _IsSneaking(attacker) && _IsAttackFromBehind(attacker.Dir, cr.Dir)) {
+            Log("Silent Death attack, no attack plane for now. " + cr.Name + " :: " + attacker.Name);
+        } else {
+            Log("Adding attack plane." + cr.Name + " -> " + attacker.Name);
+            AddAttackPlane(cr, 0, attacker);
+        }
+    }
 
     // In similar fashion to vanilla, but only for general purpose guards (normal guards will react no matter what, unless the helped is player/follower)
     uint crHelpers = 10 - attacker.Stat[ST_CHARISMA];
@@ -813,6 +819,7 @@ void critter_attacked(Critter& cr, Critter& attacker)
                         continue;
                     else
                     {
+                        critters[i].Say(SAY_NORM_ON_HEAD, "TryHelp1 - npcGroup == attackerGroup");
                         _TryHelpCr(critters[i]);
                     }
                 }
@@ -820,8 +827,10 @@ void critter_attacked(Critter& cr, Critter& attacker)
                 {
                     if(_IsTrueNpc(attacker))
                         continue;
-                    else
+                    else {
+                        critters[i].Say(SAY_NORM_ON_HEAD, "TryHelp2 - npcGroup != attackerGroup");
                         _TryHelpCr(critters[i]);
+                    }
                 }
             }
             else
@@ -840,6 +849,7 @@ void critter_attacked(Critter& cr, Critter& attacker)
                     }
                     else if((crRep >= __ReputationLoved) && (attackerRep < __ReputationHated))
                     {
+                        critters[i].Say(SAY_NORM_ON_HEAD, "TryHelp3 - Repu");
                         _TryHelpCr(critters[i]);
                     }
                 }
@@ -847,10 +857,53 @@ void critter_attacked(Critter& cr, Critter& attacker)
         }                                             // Non-general purpose guard
         else if(_GroupHasNoAffiliation(npcGroup))     // In encounters
         {
-            if(npcGroup == crGroup)
-                AddAttackPlane(critters[i], 0, attacker);
-            else if(npcGroup == attackerGroup)
+            if (npcGroup == crGroup) {
+                if (attacker.IsPlayer() && attacker.Perk[PE_SILENT_DEATH] > 0 && _IsSneaking(attacker)) {
+                    bool lookAtTarget = critters[i].Id == cr.Id;
+                    uint dir = GetDirection(critters[i].HexX, critters[i].HexY, cr.HexX, cr.HexY);
+                    if ((dir == critters[i].Dir || ((dir + 1) % 6) == critters[i].Dir || ((dir + 5) % 6) == critters[i].Dir)) {
+                        lookAtTarget = true;
+                    }
+                    int distance = GetDistantion(critters[i].HexX, critters[i].HexY, cr.HexX, cr.HexY);
+                    bool isClose = distance < 3 + critters[i].Stat[ST_PERCEPTION] / 2;
+                    if (lookAtTarget && isClose) {
+                        critters[i].Say(SAY_NORM, "!!! PE = " + critters[i].Stat[ST_PERCEPTION] + ", dist = " + distance);
+                        AddAttackPlane(critters[i], 0, attacker);
+                        Log("Group add attack plane averted by SD FAIL. Critter was close and looking at target. - 1. npcGroup == crGroup");
+                        _DisableSneak(attacker);
+                    } else {
+                        critters[i].Say(SAY_NORM_ON_HEAD, "???");
+                        Log("Group add attack plane averted by SD. - 1. npcGroup == crGroup");
+                    }
+                } else {
+                    Log("Group attack plane added. - 1. npcGroup == crGroup");
+                    //critters[i].Say(SAY_NORM_ON_HEAD, "..!..");
+                    AddAttackPlane(critters[i], 0, attacker);
+                }
+            } else if (npcGroup == attackerGroup) {
+                Log("Group attack plane added. - 2. npcGroup == attackerGroup");
                 AddAttackPlane(critters[i], 0, cr);
+                /*
+                if (attacker.IsPlayer() && attacker.Perk[PE_SILENT_DEATH] > 0 && _IsSneaking(attacker)) {
+                    Log("Group add attack plane averted by SD. - 2. npcGroup == attackerGroup");
+                    bool lookAtTarget = true;
+                    uint dir = GetDirection(critters[i].HexX, critters[i].HexY, cr.HexX, cr.HexY);
+                    if ((dir == critters[i].Dir || ((dir + 1) % 6) == critters[i].Dir || ((dir + 5) % 6) == critters[i].Dir)) {
+                        if (critters[i].Id == cr.Id) {
+                            lookAtTarget = false;
+                        }
+                    }
+                    if (lookAtTarget) {
+                        AddAttackPlane(critters[i], 0, attacker);
+                        Log("Group add attack plane averted by SD FAIL. Critter was looking at target. - 2. npcGroup == attackerGroup");
+                    } else {
+                        Log("Group add attack plane averted by SD. - 2. npcGroup == attackerGroup");
+                    }
+                } else {
+                    Log("Group attack plane added. - 2. npcGroup == attackerGroup");
+                    AddAttackPlane(critters[i], 0, cr);
+                }*/
+            }
         }
     }     // Main loop
 }

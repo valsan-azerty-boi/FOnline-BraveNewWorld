@@ -226,29 +226,50 @@ void CommenceThrowing(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty)
     uint8 dir = GetDirection(cr.HexX, cr.HexY, tx, ty);
     cr.SetDir(dir);
     _CritAnimateThrow(cr);
-    if(cr.Mode[MODE_HIDE] != 0)
-    {
-        if(!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT)
-            cr.ModeBase[MODE_HIDE] = 0;
+    if (cr.Mode[MODE_HIDE] != 0) {
+        if (!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT) {
+            if (IsGrenade(item)) {
+                cr.ModeBase[MODE_HIDE] = 0;
+            } else if (cr.Param[PE_SILENT_DEATH] != 0 && CLAMP((cr.Skill[SK_SNEAK] + cr.Skill[SK_THROWING]) / 4, 1, 95) < Random(1, 100)) {
+                cr.ModeBase[MODE_HIDE] = 0;
+            }
+        }
     }
     cr.Wait(__Breaktime);
     uint8 brofBonus = (cr.Perk[PE_BONUS_RATE_OF_ATTACK]>0)?1:0;
     cr.StatBase[ST_CURRENT_AP] -= 100 * ActionPointsCost(item, brofBonus);
-    map.RunFlyEffect(item.GetProtoId(), cr, null, cr.HexX, cr.HexY, tx, ty);
+
+    uint16 fixedStartX = cr.HexX;
+    uint16 fixedStartY = cr.HexY;
+    map.MoveHexByDir(fixedStartX, fixedStartY, 0, 2);
+    map.MoveHexByDir(fixedStartX, fixedStartY, 5, 2);
+    uint dist = GetDistantion(fixedStartX, fixedStartY, tx, ty);
+
+    uint[] values = { map.Id, fixedStartX, fixedStartY, tx, ty, item.GetProtoId() };
+    CreateTimeEvent(AFTER(REAL_MS(200)), "e_HexThrowFly", values, false);
+    //map.RunFlyEffect(item.GetProtoId(), null, null, fixedStartX, fixedStartY, tx, ty);
+
+    //map.RunFlyEffect(item.GetProtoId(), cr, null, cr.HexX, cr.HexY, tx, ty);
+
     uint16 pid = item.GetProtoId();
-    if(IsGrenade(item))
-    {
+    if (IsGrenade(item)) {
         cr.PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(item.Proto, 0), '1', true);         // '1'?
-        if(cr.Timeout[TO_BATTLE] < int(__TimeoutBattle))
+        if (cr.Timeout[TO_BATTLE] < int(__TimeoutBattle))
             _SetTimeout(cr, TO_BATTLE, __TimeoutBattle);
-        if(!map.IsTurnBased() && map.IsTurnBasedAvailability())
+        if (!map.IsTurnBased() && map.IsTurnBasedAvailability())
             map.BeginTurnBased(cr);
+
+        /*
         uint[] values = { map.Id, tx, ty, pid, cr.Id };
         CreateTimeEvent(AFTER(REAL_SECOND(1)), "e_Explode", values, false);
+        */
+
+        uint[] values2 = { map.Id, tx, ty, pid, cr.Id };
+        uint animationTimeToWait = 200 + 35 * dist + 150;
+        CreateTimeEvent(AFTER(REAL_MS(animationTimeToWait)), "e_Explode", values2, false);
+
         _SubItem(item, 1);
-    }
-    else
-    {
+    } else {
         cr.PlaySound('W', SOUND_WEAPON_USE, 'O', '1', true);         // '1'?
         MoveItem(item, 1, map, tx, ty);
         item.EventDrop(cr);

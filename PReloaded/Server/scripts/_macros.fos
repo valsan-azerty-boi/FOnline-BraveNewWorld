@@ -314,4 +314,6 @@
 #define _IsGuard                     # (cr)      (_CritHasExtMode(cr, MODE_EXT_GUARD))
 
 #define _IsTrueNpc                   # (cr)    (cr.IsNpc() && !_IsFollower(cr))
+
+#define _IsAttackFromBehind         #  (crDir, tDir) (crDir == tDir || ((crDir + 1) % 6) == tDir || ((crDir + 5) % 6) == tDir)
 #endif // __MACROS__
