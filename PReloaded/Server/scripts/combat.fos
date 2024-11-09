@@ -3138,9 +3138,9 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
             float sneakAttackMultiplier = float(CLAMP((18 - distance), 1, 16)) / 15;
             if (attacker.Perk[PE_SILENT_DEATH] != 0) {
                 //  max 4x on close range (0 - 3)
-                rawDmg *= 1 + sneakAttackMultiplier * 3;
+                rawDmg *= 2 + sneakAttackMultiplier * 2;
                 if (isDummyTraining) {
-                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " " + (1 + sneakAttackMultiplier * 3);
+                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " " + (2 + sneakAttackMultiplier * 2);
                 }
             } else {
                 // max 2x on close range (0 - 3)
