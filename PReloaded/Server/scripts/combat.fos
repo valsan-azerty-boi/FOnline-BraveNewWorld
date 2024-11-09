@@ -227,10 +227,10 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     if(!map.IsTurnBased() && map.IsTurnBasedAvailability())
         map.BeginTurnBased(cr);
 
-    // Always unsneak, except when SD and attacking NPC that dies instantly.
+    // Always unsneak, except when sneak attack (sneaking from behind) and attacking NPC that dies instantly.
     if (cr.Mode[MODE_HIDE] != 0) {
         if (!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT) {
-            if (cr.IsPlayer() && cr.Perk[PE_SILENT_DEATH] != 0 && target.IsNpc()) {
+            if (cr.IsPlayer() && target.IsNpc()) {
                 //  this will be handled when we know if NPC died.
             } else {
                 cr.ModeBase[MODE_HIDE] = 0;
@@ -3134,15 +3134,19 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
 
         if (target.IsNpc() && attack.sneakAttack) {
             //  Silent Death effect
+            int distance = GetDistantion(attacker.HexX, attacker.HexY, target.HexX, target.HexY);
+            float sneakAttackMultiplier = float(CLAMP((18 - distance), 1, 16)) / 15;
             if (attacker.Perk[PE_SILENT_DEATH] != 0) {
-                rawDmg *= 3;
+                //  max 4x on close range (0 - 3)
+                rawDmg *= 1 + sneakAttackMultiplier * 3;
                 if (isDummyTraining) {
-                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " 3";
+                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Silent Death dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " " + (1 + sneakAttackMultiplier * 3);
                 }
             } else {
-                rawDmg *= 1.5;
+                // max 2x on close range (0 - 3)
+                rawDmg *= 1 + sneakAttackMultiplier * 1;
                 if (isDummyTraining) {
-                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Sneak Attack dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " 1.5";
+                    dummyInfo += "|" + COLOR_DTEXT_REGULAR + " , Sneak Attack dmg mult on NPC = |" + COLOR_DTEXT_BONUS + " " + (1 + sneakAttackMultiplier * 1);
                 }
             }
         }

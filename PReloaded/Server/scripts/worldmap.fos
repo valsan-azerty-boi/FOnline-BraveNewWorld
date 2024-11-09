@@ -2562,12 +2562,12 @@ void InviteToEncounter(array<Critter@>& group, Item@ car, uint encounterDescript
         if(dir > 5)
             dir -= 6;
 
-        Log("Is player");
+        //Log("Is player");
         if (group[0].IsPlayer()) {
             Critter@ player = group[0];
-            Log("Is player GHOST?");
+            //Log("Is player GHOST?");
             if (player.Perk[PE_GHOST] > 0) {
-                Log("Hiding player!");
+                //Log("Hiding player!");
                 _EnableSneak(player);
             }
         }
