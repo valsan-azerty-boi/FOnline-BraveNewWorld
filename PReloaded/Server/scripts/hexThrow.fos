@@ -5,8 +5,9 @@
 #ifdef __SERVER
 # define CritterMutual       Critter
 # define ItemMutual          Item
-
+#include "utils_h.fos"
 #endif
+
 #ifdef __CLIENT
 #include "polygon_h.fos"
 # include "sprite.fos"
@@ -297,10 +298,6 @@ void CommenceHexThrowing(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty
         uint8 dir = GetDirection(cr.HexX, cr.HexY, tx, ty);
         cr.SetDir(dir);
         _CritAnimateThrow(cr);
-        if(cr.Mode[MODE_HIDE] != 0) {
-            if(!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT)
-                cr.ModeBase[MODE_HIDE] = 0;
-        }
         cr.Wait(__Breaktime);
         if (!ignoreApCost) {
             cr.StatBase[ST_CURRENT_AP] -= 100 * HexThrowActionPointsCost(item, cr);
@@ -381,6 +378,36 @@ uint e_HexThrowDistract(array<uint>@ values) {    // map id, tx, ty, pid, throwe
     cr.EventDropItem(usedWeapon);
 
     cr.RunClientScript("hexThrow@_UpdateWeapons", 0, 0, 0, null, null);
+
+    array<Critter@> crits;
+    uint foundCritters = map.GetCrittersHex(tx, ty, 12, FIND_LIFE | FIND_ONLY_NPC, crits);
+    for (uint i = 0; i < foundCritters; i++) {
+        /*
+        if (valid(crits[i].GetCurPlane())) {
+            crits[i].Say(SAY_NORM, "Current plane type = " + crits[i].GetCurPlane().Type + ", priority = " + crits[i].GetCurPlane().Priority);
+        } else {
+            crits[i].Say(SAY_NORM, "No current plane");
+        }
+        */
+        if (!valid(crits[i].GetCurPlane()) || crits[i].IsCurPlane(AI_PLANE_WALK)) {
+            if (!IsHumanoid(crits[i])) {
+                uint8 dir = GetDirection(crits[i].HexX, crits[i].HexY, tx, ty);
+                crits[i].SetDir(dir);
+                crits[i].Say(SAY_EMOTE_ON_HEAD, "distracted");
+                crits[i].Wait(10000 - crits[i].Stat[ST_INTELLECT]*500);
+            } else {
+                if (crits[i].Stat[ST_INTELLECT] < 6) {
+                    uint8 dir = GetDirection(crits[i].HexX, crits[i].HexY, tx, ty);
+                    crits[i].SetDir(dir);
+                    crits[i].Say(SAY_NORM_ON_HEAD, "Huh?");
+                    crits[i].Wait(10000 - crits[i].Stat[ST_INTELLECT]*500);
+                } else {
+                    crits[i].Say(SAY_NORM_ON_HEAD, "Just some rocks.");
+                }
+            }
+        }
+    }
+
     return 0;
 }
 #endif
