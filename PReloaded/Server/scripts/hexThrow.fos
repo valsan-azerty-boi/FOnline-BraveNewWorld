@@ -332,12 +332,31 @@ uint e_HexThrowFly(array<uint>@ values) {     // map id, fromX, fromY, toX, toY,
     return 0;
 }
 
-uint e_HexThrowFlyCritter(array<uint>@ values) {     // map id, fromCritter, pid, toCritter, fromX, fromY, toX, toY
+//  not really a hex throw as it flies to a critter, could be bugged tho in engine and does not follow critter over the fly time
+uint e_HexThrowFlyCritter(array<uint>@ values) {     // mapId, fromCritter, toCritter, fromX, fromY, toX, toY, pid
     Map@ map = GetMap(values[0]);
     Critter@ crFrom = GetCritter(values[1]);
     Critter@ crTo = GetCritter(values[2]);
+    if (values[3] == 0 || values[4] == 0) {
+        if (valid(crFrom)) {
+            values[3] = crFrom.HexX;
+            values[4] = crFrom.HexY;
+            //Log("Readjusting x, y values for attacker: X = " + values[3] + ", Y = " + values[4]);
+        } else {
+            Log("Invalid throw from, both critter id and hex are missing.");
+        }
+    }
+    if (values[5] == 0 || values[6] == 0) {
+        if (valid(crTo)) {
+            values[5] = crTo.HexX;
+            values[6] = crTo.HexY;
+            //Log("Readjusting x, y values for target: X = " + values[5] + ", Y = " + values[6]);
+        } else {
+            Log("Invalid throw from, both critter id and hex are missing.");
+        }
+    }
     if (valid(map)) {
-        map.RunFlyEffect(values[3], crFrom, crTo, values[4], values[5], values[6], values[7]);
+        map.RunFlyEffect(values[7], crFrom, crTo, values[3], values[4], values[5], values[6]);
     }
     return 0;
 }
