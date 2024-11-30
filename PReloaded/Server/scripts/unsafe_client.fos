@@ -449,6 +449,17 @@ void unsafe_WeaponMode(Critter& player, int mode, int, int, string@, array<int>@
     player.ModeBase[MODE_LAST_WPN_MODE] = mode;
 }
 
+void unsafe_CancelAttackAnimation(Critter& player, int, int, int, string@, array<int>@) {
+    player.ParamBase[TO_EX_ANIM_INTERRUPT] = GetTick();
+    if (player.GetPlayerCurrentAction() == CRITTER_ACTION_USE_WEAPON) {
+        if (player.Param[ST_EX_ATTACK_EVENT_ID] > 0) {
+            EraseTimeEvent(player.Param[ST_EX_ATTACK_EVENT_ID]);
+        }
+        _CritAnimate(player, ANIM2_TURNOFF_WEAPON);
+    }
+
+}
+
 void unsafe_TakeAll(Critter& target, int contId, int bodyId, int useFilter, string@, array<int>@)
 {
     if(!target.IsKnockout() && !target.IsDead() && target.Stat[ST_CURRENT_AP] >= 0) //&& !target.IsBusy())

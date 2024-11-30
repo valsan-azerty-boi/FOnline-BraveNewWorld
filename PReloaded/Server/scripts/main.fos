@@ -77,6 +77,7 @@ import void   ApplyTimeout(array<Item@>& items, array<uint>& itemsCount, array<I
 //import void   CheckBountyHunters(Critter& cr, Critter@ killer) from "bounties";
 import uint   CheckPlayerName( const string& name ) from "parameters";
 import void   CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo) from "combat";
+import void   CombatAttackStartAnimation(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo) from "combat";
 import void   CritterGenerate(Critter& cr) from "parameters";
 import void   CritterDescription_Set(Critter& player, int& description1, int& description2) from "critter_description";
 import void   EditRadioSettings(Critter& player, Item& radio) from "radio";
@@ -543,7 +544,7 @@ uint loop()
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Call when critter attack another.
 void critter_attack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo) {
-    CombatAttack(cr, target, weapon, weaponMode, ammo);
+    CombatAttackStartAnimation(cr, target, weapon, weaponMode, ammo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

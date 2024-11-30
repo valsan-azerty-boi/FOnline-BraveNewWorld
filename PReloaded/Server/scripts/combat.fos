@@ -122,10 +122,130 @@ int SelectArmorBonus(Item@ armor, int Int_Val_ArmorBonus)
 }
 
 
+void CombatAttackStartAnimation(Critter& attacker, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo) {
+    //Log("CombatAttackStartAnimation :: attacker.Id = " + attacker.Id + ", target.Id = " + target.Id);
+    uint weaponProtoId = 0, ammoProtoId = 0, anim1 = 0, animationDelay = 0;
+    uint8 use = _WeaponModeUse(weaponMode);
+    //  for now every animation is considered 400 ms, that is basically prepare weapon and first frame of attack anim?
+    bool playSoundEarly = false;
+    if (valid(weapon)) {
+        weaponProtoId = weapon.ProtoId;
+        switch (weapon.Weapon_Anim1) {
+            case ANIM1_FALLOUT_UNARMED:
+            case ANIM1_FALLOUT_KNIFE:
+            case ANIM1_FALLOUT_CLUB:
+            case ANIM1_FALLOUT_HAMMER:
+                playSoundEarly = true;
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_SPEAR:
+                //  throw or melee
+                playSoundEarly = true;
+                if (use == 1) {
+                    animationDelay = ANIM_ACTION_TIME_THROW_SPEAR;
+                } else {
+                    animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                }
+                break;
+            case ANIM1_FALLOUT_PISTOL:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_UZI:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_SHOOTGUN:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_RIFLE:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_MINIGUN:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            case ANIM1_FALLOUT_ROCKET_LAUNCHER:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+                break;
+            default:
+                animationDelay = ANIM_ACTION_TIME_DEFAULT;
+        }
+        //Log("CombatAttackStartAnimation :: Anim1 = " + weapon.Weapon_Anim1 + ", animationDelay = " + animationDelay);
+    } else {
+        anim1 = ANIM1_FALLOUT_UNARMED;
+        animationDelay = ANIM_ACTION_TIME_DEFAULT;
+        //Log("CombatAttackStartAnimation :: Invalid weapon, maybe unarmed?");
+    }
+    if (valid(ammo)) {
+        ammoProtoId = ammo.ProtoId;
+    } else {
+        //Log("CombatAttackStartAnimation :: Invalid ammo, maybe unarmed/melee/throwing?");
+    }
+
+    if (playSoundEarly) {
+        attacker.PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(weapon, _WeaponModeUse(weaponMode)), '1', true);
+    }
+
+    attacker.StatBase[ST_CURRENT_AP] -= 100;
+    uint[] values = { attacker.Id, target.Id, weaponProtoId, weaponMode, ammoProtoId };
+    attacker.ParamBase[ST_EX_ATTACK_EVENT_ID] = CreateTimeEvent(AFTER(REAL_MS(animationDelay)), "e_CombatAttack", values, false);
+}
+
+//  0 attackerId, 1 targetId, 2 realWeaponProtoId, 3 weapMode, 4 ammoProtoId
+uint e_CombatAttack(array<uint>@ values) {
+    Critter@ attacker = GetCritter(values[0]);
+    if (!valid(attacker)) {
+        Log("e_CombatAttack :: Attacker not valid.");
+    } else {
+        //Log("e_CombatAttack :: Attacker = " + attacker.Name);
+        attacker.ParamBase[ST_EX_ATTACK_EVENT_ID] = 0;
+    }
+
+    Critter@ target = GetCritter(values[1]);
+    if (!valid(target)) {
+        //Log("e_CombatAttack :: Target not valid.");
+    } else {
+        //Log("e_CombatAttack :: Target = " + target.Name);
+    }
+
+    ProtoItem@ realWeaponProto = GetProtoItem(values[2]);
+    if (!valid(realWeaponProto)) {
+        //Log("e_CombatAttack :: RealWeapon not valid.");
+    } else {
+        //Log("e_CombatAttack :: RealWeapon PID = " + realWeaponProto.ProtoId);
+    }
+
+
+    uint8 weaponMode = uint8(values[3]);
+    //Log("e_CombatAttack :: weaponMode = " + weaponMode);
+
+    ProtoItem@ ammoProto = GetProtoItem(values[4]);
+    if (!valid(ammoProto)) {
+        //Log("e_CombatAttack :: Ammo not valid.");
+    } else {
+        //Log("e_CombatAttack :: Ammo PID = " + ammoProto.ProtoId);
+    }
+
+    if (attacker.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) {
+        //attacker.Say(SAY_NORM, "Attack interrupted.");
+        //attacker.Say(SAY_NORM, "Current action = " + attacker.GetPlayerCurrentAction());
+        /*
+        if (attacker.GetPlayerCurrentAction() == CRITTER_ACTION_USE_WEAPON) {
+            _CritAnimate(attacker, ANIM2_STAND);
+        }*/
+        return 0;
+    }
+    CombatAttack(attacker, target, realWeaponProto, weaponMode, ammoProto);
+    return 0;
+}
 
 void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponMode, ProtoItem@ ammo)   // Export
 {
 	uint8 use = _WeaponModeUse(weaponMode);
+
+	//  we used up 1 AP to start animation, rest of the AP cost needs to be subtracted
+    int apCost = (cr.Perk[PE_BONUS_RATE_OF_ATTACK] > 0 ) ? -1 : 0;
+    apCost += _WeaponApCost(weapon, use) - 1;
+    cr.StatBase[ST_CURRENT_AP] -= 100 * apCost;
+
 	//if(cr.IsPlayer())
 	//{
 		//Log(" Use mode = " + use);
@@ -133,8 +253,10 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
 	//}
     uint8 aim = _WeaponModeAim(weaponMode);
 
-    if(aim != HIT_LOCATION_NONE && aim != HIT_LOCATION_UNCALLED)
+    //  it will do a ping sound when aimed attack mode is done
+    if (aim != HIT_LOCATION_NONE && aim != HIT_LOCATION_UNCALLED) {
         PlaySound(cr, "ICSXXXX1.ACM");           // should be (?) client-side, move when possible
+    }
 
     Item@ realWeapon = _CritGetItemHand(cr);
     Map@  map = cr.GetMap();
@@ -162,8 +284,11 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
     uint16 ty = target.HexY;
     uint16 weapPid = weapon.ProtoId;
     uint16 ammoPid = 0;
-    if(valid(ammo))
+    if (valid(ammo)) {
         ammoPid = ammo.ProtoId;
+    } else {
+        //Log("CombatAttack :: Ammo not valid.");
+    }
     bool isBurst = (ammoRound > 1); // will suffice for now
     if(isBurst)
         aim = HIT_LOCATION_UNCALLED;
@@ -838,6 +963,7 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
 
     // Commencing attack, various instances
     bool criticalHit = isHit && isCritical;
+    bool attackSoundAlreadyPlayed = false;
 
     if (isHthAttack) {
         AttackHth(attack, cr, realTarget, results, isHit, criticalHit, weaponSubtype, changedTarget);
@@ -849,34 +975,66 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
         AttackBurst(attack, map, cr, realTarget, target, results, baseToHit, isHit, criticalHit, weaponSubtype, changedTarget, wpnMaxDist, acmod, toHit, ammoRound, isNoSpread, CriticalChance);
     } else if(isRocket || (weaponSubtype == WS_THROWING)) {
         targetNoDodgeAnimation = true;
+        if (!isRocket) {
+            attackSoundAlreadyPlayed = true;
+        }
         AttackThrowingOrRocket(attack, map, cr, realTarget, target, results, baseToHit, isHit, criticalHit, weaponSubtype, changedTarget, wpnMaxDist, acmod, toHit, dmgType);
     } else {
         cr.Say(SAY_NETMSG, "ERR: weapon PID=" + weapPid + " not handled, please send bug report.");
+    }
+
+    if (!attackSoundAlreadyPlayed) {
+        cr.PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(weapon, _WeaponModeUse(weaponMode)), '1', true);
     }
 
     // Send combat messages
     FlushResults(results);
 
     // Stuff like animations and effects
+    bool exploding = isRocket || isGrenade;
 
     // Shoot
-    if(_WeaponEffect(weapon, use) != 0) {
-        if(useHex) {
-            //cr.Say(SAY_NORM, "MISS ?");
-            map.RunFlyEffect(_WeaponEffect(weapon, use), cr, null, hx, hy, tx, ty);      // yeah, the target can be null (see: grenades, rocket launcher)
+    //Log("USE = " + use);
+    if (_WeaponEffect(weapon, use) != 0) {
+        if (exploding) {
+            //  do nothing, already covered
+            //cr.Say(SAY_NORM, "Exploding");
+            //map.RunFlyEffect(_WeaponEffect(weapon, use), cr, null, hx, hy, tx, ty);      // yeah, the target can be null (see: grenades, rocket launcher)
         } else {
             //  this is covered when we converted all rocket/grenade attacks to hex attacks
-            /*
-            Log("NOT useHex - RunFlyEffect");
-            if (isRocket) {
-                map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
+            //  for laser and plasma effects
+            if (weaponSubtype == WS_GUN && valid(ammo) && (ammo.ProtoId == PID_SMALL_ENERGY_CELL || ammo.ProtoId == PID_MICRO_FUSION_CELL) ) {
+                //cr.Say(SAY_NORM, "EW");
+                uint8 dir = GetDirection(attack.Hx, attack.Hy, attack.Tx, attack.Ty);
+                uint16 fixedStartX = attack.Hx;
+                uint16 fixedStartY = attack.Hy;
+                uint dist = GetDistantion(fixedStartX, fixedStartY, attack.Tx, attack.Ty);
+                map.MoveHexByDir(fixedStartX, fixedStartY, dir, dist > 1 ? 1 : 0);
+                map.RunFlyEffect(_WeaponEffect(weapon, use), null, realTarget, fixedStartX, fixedStartY, attack.Tx, attack.Ty);
             } else {
-                uint dist = GetDistantion(cr.HexX, cr.HexY, tx, ty);
-                uint[] values = { map.Id, cr.Id, (useNormal ? normalTarget.Id : realTarget.Id), _WeaponEffect(weapon, use), hx, hy, tx, ty };
-                CreateTimeEvent(AFTER(REAL_MS(200)), "hexThrow@e_HexThrowFlyCritter", values, false);
+                //cr.Say(SAY_NORM, "NOT EW - HIT");
+                //  only animate missed attacks with spear/knife etc.
+                if (!isHit) {
+                    //cr.Say(SAY_NORM, "NOT EW - MISS");
+                    uint itemFlyingPid = _WeaponEffect(weapon, use);
+                    int moveHex = 0;
+                    switch (itemFlyingPid) {
+                        case PID_FLYING_SPEAR:
+                            moveHex = 0;
+                            break;
+                        default:
+                            moveHex = dist > 3 ? 2 : 1;
+                            break;
+                    }
+                    uint16 fixedStartX = attack.Hx;
+                    uint16 fixedStartY = attack.Hy;
+                    uint8 dir = GetDirection(attack.Hx, attack.Hy, attack.Tx, attack.Ty);
+                    if (moveHex > 0) {
+                        map.MoveHexByDir(fixedStartX, fixedStartY, dir, moveHex);
+                    }
+                    map.RunFlyEffect(_WeaponEffect(weapon, use), null, realTarget, fixedStartX, fixedStartY, attack.Tx, attack.Ty);
+                }
             }
-            */
-            //map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
         }
     }
 
@@ -924,6 +1082,67 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
         }
         target.Action(CRITTER_ACTION_DODGE, 0, null);       // Todo: type front/back
     }
+}
+
+//  ATTACK STRUCT - 0 attackerId, 1 targetId, 2 realWeaponId, 3 weapMode, 4 ammo, 5 hx, 6 hy, 7 tx, 8 ty, 9 aim, 10 isBurst, 11 weaponSubtype, 12
+uint e_ApplyDamage(array<uint>@ values) {
+    AttackStruct attack;
+
+    @attack.Attacker = GetCritter(values[0]);
+    if (!valid(attack.Attacker)) {
+        Log("e_ApplyDamage :: Attacker not valid.");
+    } else {
+        Log("e_ApplyDamage :: Attacker = " + attack.Attacker.Name);
+    }
+
+    attack.TargetId = values[1];
+    Critter@ target = GetCritter(attack.TargetId);
+    if (!valid(target)) {
+        Log("e_ApplyDamage :: Target not valid.");
+    } else {
+        Log("e_ApplyDamage :: Target = " + target.Name);
+    }
+
+    @attack.RealWeapon = GetItem(values[2]);
+    if (!valid(attack.RealWeapon)) {
+        Log("e_ApplyDamage :: RealWeapon not valid.");
+    } else {
+        Log("e_ApplyDamage :: RealWeapon PID = " + attack.RealWeapon.Proto.ProtoId);
+    }
+
+    attack.weaponMode = values[3];
+    Log("e_ApplyDamage :: weaponMode = " + attack.weaponMode);
+
+    @attack.Ammo = GetProtoItem(values[4]);
+    if (!valid(attack.Ammo)) {
+        Log("e_ApplyDamage :: Ammo not valid.");
+    } else {
+        Log("e_ApplyDamage :: Ammo PID = " + attack.Ammo.ProtoId);
+    }
+
+    attack.Hx = values[5];
+    attack.Hy = values[6];
+    attack.Tx = values[7];
+    attack.Ty = values[8];
+    Log("e_ApplyDamage :: Hx = " + attack.Hx + ", Hy = " + attack.Hx + ", Tx = " + attack.Tx + ", Ty = " + attack.Ty);
+
+    /*
+    attack.set_Aim(values[6]);
+    attack.IsBurst = isBurst;
+    attack.BloodyMess = cr.Trait[TRAIT_BLOODY_MESS] != 0;
+    attack.CombatMessage = true;
+    attack.IsUnarmed = (weaponSubtype == WS_UNARMED);
+    attack.WeaponPerk = (isUnarmed && weapon.Weapon_UnarmedArmorPiercing) ? WEAPON_PERK_PENETRATE : weaponPerk;
+    attack.WeaponSubtype = weaponSubtype;
+    attack.DmgMin = _WeaponDmgMin(weapon, use);
+    attack.DmgMax = _WeaponDmgMax(weapon, use);
+    attack.DmgType = dmgType;
+    attack.BonusDmg = 0;
+
+    uint8 use = _WeaponModeUse(weaponMode);
+    uint8 aim = _WeaponModeAim(weaponMode);
+    */
+    return 0;
 }
 
 void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCritical, bool intentionally, array<CombatRes>& results, int CriticalChance)
@@ -4086,12 +4305,14 @@ void AttackThrowingOrRocket(AttackStruct& attack, Map& map, Critter& cr, Critter
                 }
             }
         } else {
-            //cr.Say(SAY_NORM, "Throw attack damage: min = " + attack.DmgMin + ", max = " + attack.DmgMax + ", melee bonus = " + cr.Stat[ST_MELEE_DAMAGE]);
+            cr.Say(SAY_NETMSG, "Throw attack damage non-explosive: min = " + attack.DmgMin + ", max = " + attack.DmgMax + ", melee bonus = " + cr.Stat[ST_MELEE_DAMAGE]);
             //map.RunFlyEffect(realWeapon.GetProtoId(), cr, null, 0, 0, tx, ty);
             //map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
             uint8 use = _WeaponModeUse(attack.weaponMode);
-            CommenceThrown(attack, map, attack.Tx, attack.Ty, realTarget, _WeaponEffect(attack.RealWeapon.Proto, use), criticalHit, realTarget.Id, results, changedTarget);
+            CommenceThrown(attack, map, attack.Tx, attack.Ty, realTarget, attack.RealWeapon.Proto, criticalHit, realTarget.Id, results, changedTarget);
             //ApplyDamage(attack, realTarget, 1, criticalHit, !changedTarget, results, 0);
+
+
         }
     } else {
         // Miss with missiles
@@ -4222,37 +4443,76 @@ void AttackThrowingOrRocket(AttackStruct& attack, Map& map, Critter& cr, Critter
 }
 
 
-void CommenceThrown(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Critter@ realTarget, uint weapPid, bool isCritical, uint intentionallyId, array<CombatRes>& results, bool changedTarget) {
+void CommenceThrown(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Critter@ realTarget, ProtoItem& weaponProto, bool isCritical, uint intentionallyId, array<CombatRes>& results, bool changedTarget) {
     Critter@   attacker = attack.Attacker;
     uint dist = GetDistantion(attacker.HexX, attacker.HexY, realTarget.HexX, realTarget.HexY);
+    uint weaponPid = weaponProto.ProtoId;
 
-    int animationTime = 400;
+    int animationTime = 0;
     int moveHex = 0;
     uint8 dir = attacker.Dir;
-    switch (weapPid) {
-        case PID_FLYING_KNIFE:
-            animationTime = 400;
-            moveHex = dist > 3 ? 2 : 1;
+
+    uint8 use;
+    switch (weaponPid) {
+        case PID_SPEAR:
+        case PID_SHARP_SPEAR:
+        case PID_SHARPENED_POLE:
+            use = 1;
             break;
+        default:
+            use = 0;
+    }
+    uint itemFlyingPid = _WeaponEffect(weaponProto, use);
+    //attacker.Say(SAY_NORM, "WEAPON PID = " + weaponPid + ", FLYING PID = " + itemFlyingPid);
+
+    switch (itemFlyingPid) {
         case PID_FLYING_SPEAR:
-            animationTime = 720;
+            //attacker.Say(SAY_NORM, "PID_FLYING_SPEAR");
+            //animationTime = 320;
             moveHex = 0;
+            break;
+        default:
+            //attacker.Say(SAY_NORM, "DEFAULT - Knife, Rock, Flare, etc");
+            animationTime = 0;
+            moveHex = dist > 3 ? 2 : 1;
             break;
     }
 
     uint16 fixedStartX = attacker.HexX;
     uint16 fixedStartY = attacker.HexY;
-
     if (moveHex > 0) {
         map.MoveHexByDir(fixedStartX, fixedStartY, dir, moveHex);
     }
 
-    uint[] values = { map.Id, 0, realTarget.Id, fixedStartX, fixedStartY, 0, 0, weapPid };
+    map.RunFlyEffect(itemFlyingPid, null, realTarget, fixedStartX, fixedStartY, attack.Tx, attack.Ty);
+    /*
+    uint[] values = { map.Id, 0, realTarget.Id, fixedStartX, fixedStartY, 0, 0, itemFlyingPid };
     CreateTimeEvent(AFTER(REAL_MS(animationTime)), "hexThrow@e_HexThrowFlyCritter", values, false);
+    */
 
-    uint[] values2 = { map.Id, attacker.Id, realTarget.Id, attacker.HexX, attacker.HexY, realTarget.HexX, realTarget.HexY, weapPid };
+    //uint[] values2 = { map.Id, attacker.Id, realTarget.Id, attacker.HexX, attacker.HexY, realTarget.HexX, realTarget.HexY, weaponPid };
     //CreateTimeEvent(AFTER(REAL_MS(600 + 35*dist)), "e_CommenceThrownApplyDamage", values2, false);
 
+    //Log("CommenceThrown :: Before e_ApplyDamage");
+    //  0 attackerId, 1 targetId, 2 realWeaponId, 3 weapMode, 4 ammoId, 5 hx, 6 hy, 7 tx, 8 ty,
+
+    uint realWeaponId = 0;
+    if (valid(attack.RealWeapon)) {
+        realWeaponId = attack.RealWeapon.Id;
+    } else {
+        //Log("CommenceThrown :: INVALID attack.RealWeapon");
+    }
+    uint ammoPid = 0;
+    if (valid(attack.Ammo)) {
+        ammoPid = attack.Ammo.ProtoId;
+    } else {
+        //Log("CommenceThrown :: INVALID attack.Ammo");
+    }
+    /*
+    //Log("CommenceThrown :: attacker.Id = " + attacker.Id + ", realTarget.Id = " + realTarget.Id);
+    uint[] values3 = { attacker.Id, realTarget.Id, realWeaponId, attack.weaponMode, ammoPid, attacker.HexX, attacker.HexY, realTarget.HexX, realTarget.HexY };
+    CreateTimeEvent(AFTER(REAL_MS(animationTime + 35*dist)), "e_ApplyDamage", values3, false);
+    */
     ApplyDamage(attack, realTarget, 1, isCritical, !changedTarget, results, 0);
 }
 
@@ -4299,7 +4559,7 @@ void CommenceExplosion(AttackStruct& attack, Map@ map, uint16 tx, uint16 ty, Cri
     } else if (weapPid == PID_PLASMA_GRENADE || weapPid == PID_FAKE_PLASMA_GRENADE) {
         map.RunEffect(PID_EXPLODE_PLASMA, tx, ty, 2);
     } else if (isRocket) {
-        map.RunEffect(PID_EXPLODE_ROCKET, tx, ty, 1);
+        map.RunEffect(PID_EXPLODE_ROCKET, tx, ty, 2);
     } else if (weapPid == PID_DYNACORD) {
         map.RunEffect(PID_EXPLODE_FIRE_BIG, tx, ty, 3);
     } else {
@@ -5265,6 +5525,64 @@ uint cte_AllowRunAgain(Critter& cr, int identifier, uint& rate) {
     rate = 0;
     if (cr.ParamBase[MODE_NO_RUN] > 0) {
         cr.ParamBase[MODE_NO_RUN] = 0;
+    }
+    return 0;
+}
+
+uint e_EnergyWeaponEffectFlyCritter(array<uint>@ values) {     // mapId, fromCritter, toCritter, fromX, fromY, toX, toY, pid
+    Map@ map = GetMap(values[0]);
+    Critter@ crFrom = GetCritter(values[1]);
+    Critter@ crTo = GetCritter(values[2]);
+    if (values[3] == 0 || values[4] == 0) {
+        if (valid(crFrom)) {
+            values[3] = crFrom.HexX;
+            values[4] = crFrom.HexY;
+            //Log("Readjusting x, y values for attacker: X = " + values[3] + ", Y = " + values[4]);
+        } else {
+            Log("Invalid EW fly effect: from, both critter id and hex are missing.");
+        }
+    }
+    if (values[5] == 0 || values[6] == 0) {
+        if (valid(crTo)) {
+            values[5] = crTo.HexX;
+            values[6] = crTo.HexY;
+            //Log("Readjusting x, y values for target: X = " + values[5] + ", Y = " + values[6]);
+        } else {
+            Log("Invalid EW fly effect: to, both critter id and hex are missing.");
+        }
+    }
+    uint8 dir = GetDirection(values[3], values[4], values[5], values[6]);
+    uint16 fixedStartX = values[3];
+    uint16 fixedStartY = values[4];
+    uint dist = GetDistantion(fixedStartX, fixedStartY, values[5], values[6]);
+    map.MoveHexByDir(fixedStartX, fixedStartY, dir, dist > 1 ? 1 : 0);
+
+    if (valid(map)) {
+        map.RunFlyEffect(values[7], null, crTo, fixedStartX, fixedStartY, values[5], values[6]);
+    }
+    return 0;
+}
+
+uint e_SoundEffectDelayed(array<uint>@ values) {     // mapId, fromCritter, toCritter, fromX, fromY, toX, toY, pid
+    Map@ map = GetMap(values[0]);
+    if (valid(map)) {
+        //map.
+    }
+    return 0;
+}
+
+uint getWeaponAnimationDelayForProjectile(uint16 weaponPid) {
+    switch(weaponPid) {
+        case PID_LASER_PISTOL:
+        case PID_MAGNETO_LASER_PISTOL:
+        case PID_PLASMA_PISTOL:
+            Log("Laser Pistol");
+            return 400;
+        case PID_LASER_RIFLE:
+        case PID_LASER_RIFLE_EXT_CAP:
+        case PID_PLASMA_RIFLE:
+            Log("Laser Rifle");
+            return 375;
     }
     return 0;
 }

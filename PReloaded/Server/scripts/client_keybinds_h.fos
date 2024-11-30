@@ -156,6 +156,7 @@ class StopCritterBind : BaseBind
             uint[] action = { CHOSEN_NONE, 0, 0, 0, 0, 0, 0 };
             SetChosenActions(action);
         }
+        RunServerScriptUnsafe("unsafe_client@unsafe_CancelAttackAnimation", 0, 0, 0, "", null);
     }
 };
 

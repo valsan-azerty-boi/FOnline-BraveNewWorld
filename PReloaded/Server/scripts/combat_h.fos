@@ -8,6 +8,27 @@
 #ifndef _COMBAT_H_
 #define _COMBAT_H_
 
+
+//  Fallout animations
+#define ANIM1_FALLOUT_UNARMED               (1)
+#define ANIM1_FALLOUT_DEAD                  (2)
+#define ANIM1_FALLOUT_KNOCKOUT              (3)
+#define ANIM1_FALLOUT_KNIFE                 (4)
+#define ANIM1_FALLOUT_CLUB                  (5)
+#define ANIM1_FALLOUT_HAMMER                (6)
+#define ANIM1_FALLOUT_SPEAR                 (7)
+#define ANIM1_FALLOUT_PISTOL                (8)
+#define ANIM1_FALLOUT_UZI                   (9)
+#define ANIM1_FALLOUT_SHOOTGUN              (10)
+#define ANIM1_FALLOUT_RIFLE                 (11)
+#define ANIM1_FALLOUT_MINIGUN               (12)
+#define ANIM1_FALLOUT_ROCKET_LAUNCHER       (13)
+#define ANIM1_FALLOUT_AIM                   (14)
+
+#define ANIM_ACTION_TIME_DEFAULT            (400)
+#define ANIM_ACTION_TIME_THROW_SPEAR        (700)
+
+
 #define HF_RESIST_TRESHOLD_1        (10)
 #define HF_RESIST_TRESHOLD_2        (15)
 

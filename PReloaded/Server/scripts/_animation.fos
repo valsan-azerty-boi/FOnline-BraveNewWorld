@@ -21,6 +21,7 @@
 #define _CritAnimateSingle                                                   # (cr) cr.Animate(0, ANIM2_SINGLE, null, true, true)
 #define _CritAnimateBurst                                                    # (cr) cr.Animate(0, ANIM2_BURST, null, true, true)
 #define _CritAnimateFidget                                                   # (cr) cr.Animate(0, ANIM2_FIDGET, null, true, true)
+#define _CritAnimateReload                                                   # (cr) cr.Animate(0, ANIM2_RELOAD, null, true, true)
 
 // Anim types
 #define ANIM_TYPE_TACTICS                                                    (ANIM_TYPE_LAST+1)

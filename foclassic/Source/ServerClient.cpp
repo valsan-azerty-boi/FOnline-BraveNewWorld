@@ -747,14 +747,16 @@ bool FOServer::Act_Attack( Critter* cr, uint8 rate_weap, uint target_id )
     if( event_result )
     {
         // cr->SendAA_Action(CRITTER_ACTION_USE_WEAPON,rate_weap,weap);
-        cr->SubAp( ap_cost );
+		//	BNW change, to allow animation canceling, AP subtrct will happen in AS
+		//cr->SubAp( ap_cost );
         if( map->IsTurnBasedOn && !cr->GetAllAp() )
             map->EndCritterTurn();
         return true;
     }
 
     // Ap, Turn based
-    cr->SubAp( ap_cost );
+	//	BNW change, to allow animation canceling, AP subtrct will happen in AS
+	//cr->SubAp( ap_cost );
     if( map->IsTurnBasedOn && !cr->GetAllAp() )
         map->EndCritterTurn();
 
@@ -3073,7 +3075,7 @@ void FOServer::Process_UseItem( Client* cl )
                     cl->ItemSlotMain->Init( unarmed );
                 }
 
-                Act_Attack( cl, rate, target_id );
+				Act_Attack( cl, rate, target_id );
                 break;
             case USE_RELOAD:
                 Act_Reload( cl, item->GetId(), target_id );
