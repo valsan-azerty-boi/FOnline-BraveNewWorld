@@ -47,6 +47,7 @@ import void WearHandsOnDeath(Critter& cr) from "repair";
 import void SetMinWear(Item& item, int wearProcent) from "repair";
 import void CommenceHexThrowing(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost) from "hexThrow";
 import void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost) from "hexShot";
+import uint GetAnimFlySpeedByAngle(float flyAngle) from "hexShot";
 
 /*
 class AttackStruct
@@ -224,15 +225,11 @@ uint e_CombatAttack(array<uint>@ values) {
         //Log("e_CombatAttack :: Ammo PID = " + ammoProto.ProtoId);
     }
 
-    if (attacker.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) {
-        //attacker.Say(SAY_NORM, "Attack interrupted.");
-        //attacker.Say(SAY_NORM, "Current action = " + attacker.GetPlayerCurrentAction());
-        /*
-        if (attacker.GetPlayerCurrentAction() == CRITTER_ACTION_USE_WEAPON) {
-            _CritAnimate(attacker, ANIM2_STAND);
-        }*/
+    //  player interrupts with S or is not able to perform action
+    if ((attacker.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) || attacker.IsDead() || attacker.IsKnockout()) {
         return 0;
     }
+
     CombatAttack(attacker, target, realWeaponProto, weaponMode, ammoProto);
     return 0;
 }
@@ -2373,6 +2370,7 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     bool isDead = false;
     bool loseTurn = false;
     bool isBelow = false;
+    bool interruptAction = false;
     int  knockDmg = totalDmg;
 
     if (target.Mode[MODE_INVULNERABLE] != 0) {
@@ -2494,9 +2492,11 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
     }
 
     // Instant death
-    if(FLAG(eff, HF_DEATH))
+    if (FLAG(eff, HF_DEATH)) {
+        interruptAction = true;
         if(target.Stat[ST_CURRENT_HP] > totalDmg)
             totalDmg = target.Stat[ST_CURRENT_HP];
+    }
 
 
     //  BNW MECHANICS CHANGE: see issue #110 https://github.com/Sasabmeg/FOnline-BraveNewWorld/issues/110
@@ -2615,7 +2615,8 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
                 }
                 //target.StatBase[ST_CURRENT_AP] = (target.StatBase[ST_CURRENT_AP] - 100 * apLoss > 0 ? target.StatBase[ST_CURRENT_AP] - 100 * apLoss : 0);
                 target.ParamBase[TO_EX_SHOCKED] = GetTick();
-                target.Say(SAY_NETMSG, "You have been shocked, impairing your movement and losing " + apLoss + " action points.");
+                target.Say(SAY_NETMSG, "You have been shocked, interrupting your current action, impairing your movement and losing " + apLoss + " action points.");
+                interruptAction = true;
                 //attack.Attacker.Say(SAY_NETMSG, "Target AP loss = " + apLoss + ", new AP = " + target.StatBase[ST_CURRENT_AP] + ", timer = " + target.ParamBase[TO_EX_SHOCKED]);
                 //Log("Target AP loss = " + apLoss + ", new AP = " + target.StatBase[ST_CURRENT_AP] + ", timer = " + target.ParamBase[TO_EX_SHOCKED]);
                 if (target.ParamBase[MODE_NO_RUN] == 0 && target.GetTimeEvents(CTE_ALLOW_RUN, null, null, null) == 0) {
@@ -2732,6 +2733,18 @@ void ApplyDamage(AttackStruct& attack, Critter& target, uint rounds, bool isCrit
 		else
 			WearItem(target, armor_, ((100 - armorDr) * rounds + totalDmg) / 6);
 	}
+
+	if (isDead || isKo || isOffGame || loseTurn) {
+        interruptAction = true;
+	}
+	if (interruptAction) {
+        //  stop and erase any animation timed events
+        target.ParamBase[TO_EX_ANIM_INTERRUPT] = GetTick();
+        if (target.Param[ST_EX_ATTACK_EVENT_ID] > 0) {
+            EraseTimeEvent(target.Param[ST_EX_ATTACK_EVENT_ID]);
+        }
+	}
+
 
 	// 30-08-2013 Cubik: Banhammer effect - kick player from game
 	if(isOffGame)
@@ -4274,13 +4287,24 @@ void AttackThrowingOrRocket(AttackStruct& attack, Map& map, Critter& cr, Critter
                 if (realTarget.IsMoving()) {
                     uint16 predictedToX = realTarget.HexX;
                     uint16 predictedToY = realTarget.HexY;
+                    uint distance = GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY);
                     int predictDistance = 0;
+                    int dx = realTarget.HexX - cr.HexX;
+                    int dy = realTarget.HexY - cr.HexY;
+                    float flyAngle = atan2(dy, dx);
+                    uint speed = GetAnimFlySpeedByAngle(flyAngle);
                     if (realTarget.IsRunning()) {
-                        predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 0) / 10;
+                        predictDistance = (distance * speed) / ANIM_FLY_TIMEFACTOR_RUN;
                     } else {
-                        predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 5) / 20;
+                        predictDistance = (distance * speed) / ANIM_FLY_TIMEFACTOR_WALK;
                     }
-                    //cr.Say(SAY_NORM, "Predict Adjust = " + predictDistance + ", Distance = " + GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY));
+                    /*
+                    flyAngle *= 18000;
+                    int rounded = int(flyAngle);
+                    flyAngle = float(rounded);
+                    flyAngle /= 314.15;
+                    cr.Say(SAY_NORM, "Predict Adjust = " + predictDistance + ", Distance = " + distance + ", Angle = " + flyAngle + ", Speed = " + speed);
+                    */
                     map.MoveHexByDir(predictedToX, predictedToY, realTarget.Dir, predictDistance);
                     CommenceHexShoting(cr, map, attack.RealWeapon, predictedToX, predictedToY, true);
                 } else {
@@ -4291,13 +4315,17 @@ void AttackThrowingOrRocket(AttackStruct& attack, Map& map, Critter& cr, Critter
                 if (realTarget.IsMoving()) {
                     uint16 predictedToX = realTarget.HexX;
                     uint16 predictedToY = realTarget.HexY;
+                    uint distance = GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY);
                     int predictDistance = 0;
+                    int dx = realTarget.HexX - cr.HexX;
+                    int dy = realTarget.HexY - cr.HexY;
+                    float flyAngle = atan2(dy, dx);
+                    uint speed = GetAnimFlySpeedByAngle(flyAngle);
                     if (realTarget.IsRunning()) {
-                        predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 3) / 5;
+                        predictDistance = (distance * speed) / ANIM_FLY_TIMEFACTOR_RUN;
                     } else {
-                        predictDistance = (GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY) + 5) / 16;
+                        predictDistance = (distance * speed) / ANIM_FLY_TIMEFACTOR_WALK;
                     }
-                    //cr.Say(SAY_NORM, "Predict Adjust = " + predictDistance + ", Distance = " + GetDistantion(cr.HexX, cr.HexY, realTarget.HexX, realTarget.HexY));
                     map.MoveHexByDir(predictedToX, predictedToY, realTarget.Dir, predictDistance);
                     CommenceHexThrowing(cr, map, attack.RealWeapon, predictedToX, predictedToY, true);
                 } else {
@@ -4305,7 +4333,7 @@ void AttackThrowingOrRocket(AttackStruct& attack, Map& map, Critter& cr, Critter
                 }
             }
         } else {
-            cr.Say(SAY_NETMSG, "Throw attack damage non-explosive: min = " + attack.DmgMin + ", max = " + attack.DmgMax + ", melee bonus = " + cr.Stat[ST_MELEE_DAMAGE]);
+            //cr.Say(SAY_NETMSG, "Throw attack damage non-explosive: min = " + attack.DmgMin + ", max = " + attack.DmgMax + ", melee bonus = " + cr.Stat[ST_MELEE_DAMAGE]);
             //map.RunFlyEffect(realWeapon.GetProtoId(), cr, null, 0, 0, tx, ty);
             //map.RunFlyEffect(_WeaponEffect(weapon, use), cr, (useNormal ? normalTarget : realTarget), hx, hy, tx, ty);
             uint8 use = _WeaponModeUse(attack.weaponMode);

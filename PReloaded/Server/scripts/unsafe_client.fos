@@ -455,7 +455,9 @@ void unsafe_CancelAttackAnimation(Critter& player, int, int, int, string@, array
         if (player.Param[ST_EX_ATTACK_EVENT_ID] > 0) {
             EraseTimeEvent(player.Param[ST_EX_ATTACK_EVENT_ID]);
         }
-        _CritAnimate(player, ANIM2_TURNOFF_WEAPON);
+        if (!player.IsDead() && !player.IsKnockout()) {
+            _CritAnimate(player, ANIM2_TURNOFF_WEAPON);
+        }
     }
 
 }

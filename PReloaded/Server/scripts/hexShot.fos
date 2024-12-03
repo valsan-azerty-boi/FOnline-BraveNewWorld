@@ -258,17 +258,19 @@ void CommenceHexShoting(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty,
     //  ignoreApCost - also hex shot or normal shot, normal shot will translate to hex shot here, but 400 ms time difference bc animation already handled in combat.fos
     if (!ignoreApCost) {
         _CritAnimate(cr, ANIM2_PREPARE_WEAPON);
-        //_CritAnimateSingle(cr);
-        //cr.PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(item.Proto, 1), '1', true);         // '1'?
+        cr.Wait(__Breaktime);
         uint[] values = { cr.Id, map.Id, item.Id, tx, ty };
         CreateTimeEvent(AFTER(REAL_MS(400)), "e_AnimateHexShot", values, false);
     } else {
-        //cr.Say(SAY_NORM, "IgnoreApCost!");
         CommenceHexShotingEffectAfterAnimation(cr, map, item, tx, ty, ignoreApCost);
     }
 }
 
 void CommenceHexShotingEffectAfterAnimation(Critter& cr, Map& map, Item& item, uint16 tx, uint16 ty, bool ignoreApCost = false) {
+    //  player interrupts with S or is not able to perform action
+    if ((cr.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) || cr.IsDead() || cr.IsKnockout()) {
+        return;
+    }
     if (cr.Mode[MODE_HIDE] != 0) {
         if (!cr.IsPlayer() || cr.GetAccess() == ACCESS_CLIENT) {
             cr.ModeBase[MODE_HIDE] = 0;
@@ -298,9 +300,14 @@ void CommenceHexShotingEffectAfterAnimation(Critter& cr, Map& map, Item& item, u
     if(!map.IsTurnBased() && map.IsTurnBasedAvailability())
         map.BeginTurnBased(cr);
 
+    int dx = fixedTargetX - fixedStartX;
+    int dy = fixedTargetY - fixedStartY;
+    float flyAngle = atan2(dy, dx);
+
+    int animFlySpeed = GetAnimFlySpeedByAngle(flyAngle);
 
     uint[] values2 = { map.Id, tx, ty, pid, cr.Id, item.AmmoPid };
-    uint animationTimeToWait = 200 + 35 * dist + 75;
+    uint animationTimeToWait = 200 + animFlySpeed * dist;
     CreateTimeEvent(AFTER(REAL_MS(animationTimeToWait)), "e_HexShotExplode", values2, false);
 
     if (!ignoreApCost) {
@@ -327,6 +334,36 @@ void CommenceHexShotingEffectAfterAnimation(Critter& cr, Map& map, Item& item, u
     }
 }
 
+uint GetAnimFlySpeedByAngle(float flyAngle) {
+    flyAngle *= 18000;
+    int rounded = int(flyAngle);
+    flyAngle = float(rounded);
+    flyAngle /= 314.15;
+    flyAngle = CLAMP(flyAngle, -180, 180);
+    //  smaller number is faster, not exactly speed, is it?
+    float[][] flySpeed = {
+        //  bottom left quarter on screen, second part
+        /*{150, 56}, {165, 49}, {180, 43}, */{-180, 43}, {-165, 36}, {-155, 30}, {-150, 26}, {-135, 22}, {-125, 21},
+        //  bottom right quarter on screen
+        {-120, 20}, {-115, 21}, {-105, 22}, {-90, 26}, {-85, 30}, {-75, 36}, {-60, 43}, {-45, 49},
+        //  top right quarter
+        {-30, 56}, {-15, 49}, {0, 43}, {15, 36}, {25, 30}, {30, 26}, {45, 22}, {55, 21},
+        //  top left quarter
+        {60, 20}, {65, 21}, {75, 22}, {90, 26}, {95, 30}, {105, 36}, {120, 43}, {135, 49},
+        //  bottom left quarter on screen, first part
+        {150, 56}, {165, 49}, {180, 43}
+    };
+    uint index = 1;
+    while ((index < flySpeed.length - 1) && (flyAngle > flySpeed[index][0])) {
+        index++;
+    }
+    if (index >= flySpeed.length) {
+        index = flySpeed.length - 1;
+    }
+    int animFlySpeed = flySpeed[index-1][1] + (flyAngle - flySpeed[index-1][0]) * (flySpeed[index][1] - flySpeed[index-1][1]) / (flySpeed[index][0] - flySpeed[index-1][0]);
+    //Log("Angle = " + flyAngle + ", speed = " + animFlySpeed + ", index = " + index);
+    return animFlySpeed;
+}
 
 uint e_HexShotAutoReloadRocket(array<uint>@ values) {     // critter id, item id, AP cost
     Critter@ cr = GetCritter(values[0]);
@@ -335,6 +372,11 @@ uint e_HexShotAutoReloadRocket(array<uint>@ values) {     // critter id, item id
         return 0;
     } else {
         //Log("e_HexShotAutoReloadRocket :: Attacker = " + cr.Name);
+    }
+
+    //  player interrupts with S or is not able to perform action
+    if ((cr.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) || cr.IsDead() || cr.IsKnockout()) {
+        return 0;
     }
 
     Item@ weapon =  GetItem(values[1]);
@@ -383,8 +425,8 @@ uint e_AnimateHexShot(array<uint>@ values) {     // critter id, map id, weapon i
     }
     int tx = values[3];
     int ty = values[4];
-    if (cr.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) {
-        cr.Say(SAY_NORM, "Hex Shoot interrupted.");
+    //  player interrupts with S or is not able to perform action
+    if ((cr.Param[TO_EX_ANIM_INTERRUPT] > int(GetTick()) - ANIM_ACTION_TIME_DEFAULT) || cr.IsDead() || cr.IsKnockout()) {
         return 0;
     }
     _CritAnimateSingle(cr);

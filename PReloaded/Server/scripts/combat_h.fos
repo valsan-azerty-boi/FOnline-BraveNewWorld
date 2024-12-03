@@ -26,7 +26,7 @@
 #define ANIM1_FALLOUT_AIM                   (14)
 
 #define ANIM_ACTION_TIME_DEFAULT            (400)
-#define ANIM_ACTION_TIME_THROW_SPEAR        (700)
+#define ANIM_ACTION_TIME_THROW_SPEAR        (720)
 
 
 #define HF_RESIST_TRESHOLD_1        (10)
@@ -71,6 +71,9 @@
 #define COMBAT_AMMO_AP             # (ammo_) (valid(ammo_) ? (ammo_.Ammo_DTDiv > 0) : false)
 // todo: move to proto
 #define COMBAT_WEAPON_ALLOWS_SD    # (__weapon)     (__weapon.Proto.ProtoId == PID_14MM_PISTOL || __weapon.Proto.ProtoId == PID_223_PISTOL)
+
+#define ANIM_FLY_TIMEFACTOR_RUN    (250)
+#define ANIM_FLY_TIMEFACTOR_WALK   (500)
 
 // melee weapon attack mode by Cubik & John (from 2155)
 #define MODE_PRIMARY_ATTACK                 (0)
