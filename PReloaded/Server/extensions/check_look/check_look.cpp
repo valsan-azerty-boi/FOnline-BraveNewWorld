@@ -187,6 +187,18 @@ EXPORT bool check_look(Map& map, Critter& cr, Critter& opponent)
 		}
 
 		int sk = opponent.Params[SK_SNEAK];
+		//	BNW: dogs or deathclaws bypass NPC sneak detection nerf, unless player has GHOST perk.
+		if (cr.CritterIsNpc && !opponent.CritterIsNpc) {
+			if ((cr.Params[ST_BASE_CRTYPE] == CRTYPE_DOG || cr.Params[ST_BASE_CRTYPE] == CRTYPE_DOG_ROBOT || cr.Params[ST_BASE_CRTYPE] == CRTYPE_DOG_RED || cr.Params[ST_BASE_CRTYPE] == CRTYPE_MAADOG 
+					|| cr.Params[ST_BASE_CRTYPE] == CRTYPE_DEATHCLAW || cr.Params[ST_BASE_CRTYPE] == CRTYPE_DEATHCLAW_SMALL || cr.Params[ST_BASE_CRTYPE] == CRTYPE_DEATHCLAW_SPECIAL)
+					&& opponent.Params[PE_GHOST] <= 0) {
+				//	the penalty for trying to sneak past NPC's with good detection/smell, basically dogs or deathclaws is that player doesn't get bonus if they don't have ghost perk
+				//Log("check_look :: No sneak bonus\n");
+			} else {
+				sk += 100;	//	PVE bonus to make stealth play easier, for more enjoyable PVE and variety without needed specializatio in sneak
+				//Log("check_look :: Sneak bonus +100\n");
+			}
+		}
 
 		// bonuses before clamp
 
