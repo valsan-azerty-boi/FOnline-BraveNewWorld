@@ -135,8 +135,10 @@ EXPORT bool check_look(Map& map, Critter& cr, Critter& opponent)
 		(!stealhBoyActive || (stealhBoyActive && !_CritHasMode(opponent, MODE_HIDE))))          // don't have active Stealth Boy OR have active SB and is not sneaked
 		return true;
 
-	// min range - always visible
-	if(dist <= (int)(FOClassic->LookMinimum)) return true;
+	// min range - always visible, but players can sneak up closer to NPC's back handled later
+	if (cr.CritterIsNpc && dist <= (int)(FOClassic->LookMinimum)) {
+		return true;
+	}
 
 	// dead/unconcious/neg hp - only minimum range
 	if(cr.Cond != CRITTER_CONDITION_LIFE) return (dist <= (int)(FOClassic->LookMinimum));
@@ -155,9 +157,9 @@ EXPORT bool check_look(Map& map, Critter& cr, Critter& opponent)
 	// transform direction from critter A to critter B into "character coord-space"
 	uint8 dir = (uint8)GetDirection(cx, cy, ox, oy);
 
-	dir = cr.Dir>dir?cr.Dir-dir:dir-cr.Dir;
-
-    // adjust distance based on fov (NOT only for sneakers)
+	dir = cr.Dir > dir ? cr.Dir - dir : dir - cr.Dir;
+	// adjust distance based on fov (NOT only for sneakers)
+	int lookDirIndex = 0;
     switch(dir)
     {
         case 0:
@@ -166,16 +168,24 @@ EXPORT bool check_look(Map& map, Critter& cr, Critter& opponent)
         case 1:
         case 5:
             max_range -= (max_range* (int)(FOClassic->LookDir[1]))/100; // frontsides
+			lookDirIndex = 1;
             break;
         case 2:
         case 4:
             max_range -= (max_range* (int)(FOClassic->LookDir[2]))/100; // backsides
+			lookDirIndex = 2;
             break;
         default:
             max_range -= (max_range* (int)(FOClassic->LookDir[3]))/100; // back
+			lookDirIndex = 3;
     }
 
 	if(dist > max_range) return false;
+
+	//	minimum distance calcualtion for NPC's
+	if (!cr.CritterIsNpc && dist <= ((int)(FOClassic->LookMinimum) * (int)(100 - FOClassic->LookDir[lookDirIndex])) / 100) {
+		return true;
+	}
 
 	if(_CritHasMode(opponent, MODE_HIDE))
 	{
