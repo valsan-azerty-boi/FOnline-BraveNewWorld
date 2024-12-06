@@ -90,8 +90,16 @@ import bool IsGrenade(ItemMutual& item) from "hexThrow";
 #define MUZZLEDATA_DELAY  (7) // used only for bursts
 #define MUZZLEDATA_AMOUNT (8) // used only for bursts
 
-#define MUZZLE_TYPE_DEFAULT		(0)
-#define MUZZLE_TYPE_BOLT		(1)
+#define MUZZLE_TYPE_DEFAULT		    (0)
+#define MUZZLE_TYPE_BOLT_SMALL	    (1)
+#define MUZZLE_TYPE_BOLT_MEDIUM     (2)
+#define MUZZLE_TYPE_BOLT_LARGE      (3)
+
+#define ANIM_TIME_BURST_SMG         (500)
+#define ANIM_TIME_BURST_SHOTGUN     (500)
+#define ANIM_TIME_BURST_RIFLE       (500)
+#define ANIM_TIME_BURST_RIFLE2      (700)
+#define ANIM_TIME_BURST_MINIGUN     (1000)
 
 
 

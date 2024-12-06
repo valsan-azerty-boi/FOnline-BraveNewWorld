@@ -643,8 +643,11 @@ class MuzzleFlash : IMuzzleFlash
 		else
 		{
 			RecalculatePoints(msDiff);
-			if(Type == MUZZLE_TYPE_DEFAULT) 	DrawPrimitive(DRAW_PRIMITIVE_LINELIST, data);
-			else if(Type == MUZZLE_TYPE_BOLT) 	DrawPrimitive(DRAW_PRIMITIVE_TRIANGLEFAN, dataBolt);
+			if (Type == MUZZLE_TYPE_DEFAULT) {
+                DrawPrimitive(DRAW_PRIMITIVE_LINELIST, data);
+			} else if (Type == MUZZLE_TYPE_BOLT_SMALL || Type == MUZZLE_TYPE_BOLT_MEDIUM || Type == MUZZLE_TYPE_BOLT_LARGE) {
+                DrawPrimitive(DRAW_PRIMITIVE_TRIANGLEFAN, dataBolt);
+			}
 
 		}
 
@@ -655,21 +658,44 @@ class MuzzleFlash : IMuzzleFlash
 	{
 
 		GetHexPos(mapx1, mapy1, data[0], data[1]);
+		/*
+		if (msPass < 100) {
+            Message(":: mapx1=" + mapx1 + ", mapy1=" + mapy1 + ", data[0]=" + data[0] + ", data[1]=" + data[1] + ", speed[0]=" + speed[0] + ", speed[1]=" + speed[1] + ", msPass=" + msPass);
+		}*/
+        data[0] = (data[0] + (speed[0]*msPass));
+        data[1] = (data[1] + (-32/__SpritesZoom)+(speed[1]*msPass));
 
-
-		data[0] = (data[0] + (speed[0]*msPass));
-		data[1] = (data[1] + (-32/__SpritesZoom)+(speed[1]*msPass));
-
-		data[3] = (data[0] - (speed[0]*msPass/10));
-		data[4] = (data[1] - (speed[1]*msPass/10));
+		if (Type == MUZZLE_TYPE_BOLT_SMALL) {
+            data[3] = (data[0] - (speed[0]*6));
+            data[4] = (data[1] - (speed[1]*6));
+		} else if (Type == MUZZLE_TYPE_BOLT_MEDIUM) {
+            data[3] = (data[0] - (speed[0]*12));
+            data[4] = (data[1] - (speed[1]*12));
+		} else if (Type == MUZZLE_TYPE_BOLT_LARGE) {
+            data[3] = (data[0] - (speed[0]*16));
+            data[4] = (data[1] - (speed[1]*16));
+		} else {
+            data[3] = (data[0] - (speed[0]*msPass/10));
+            data[4] = (data[1] - (speed[1]*msPass/10));
+		}
 
 		data[2] = color1;
 		data[5] = color2;
+		/*
+		if ((msPass/10*10)%100 == 0) {
+            Message(":: data[0]=" + data[0] + ", data[1]=" + data[1] + ", data[3]=" + data[3] + ", data[4]=" + data[4] + ", msPass=" + msPass);
+		}*/
 
 
-		if(Type == MUZZLE_TYPE_BOLT)
-		{
+		if (Type == MUZZLE_TYPE_BOLT_SMALL || Type == MUZZLE_TYPE_BOLT_MEDIUM || Type == MUZZLE_TYPE_BOLT_LARGE) {
 			uint boltRadius = 3;
+			/*
+			if (Type == MUZZLE_TYPE_BOLT_MEDIUM) {
+                boltRadius = 4;
+			}
+			if (Type == MUZZLE_TYPE_BOLT_LARGE) {
+                boltRadius = 5;
+			}*/
 
 			dataBolt[0] = data[3];
 			dataBolt[1] = data[4];
@@ -696,8 +722,6 @@ class MuzzleFlash : IMuzzleFlash
 			dataBolt[14] = color1;
 			dataBolt[17] = color1;
 		}
-
-
 	}
 }
 

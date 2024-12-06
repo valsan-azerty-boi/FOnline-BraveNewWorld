@@ -777,6 +777,12 @@ void combat_result(array<uint>& data)
                 bool	isFlamer 	 = 	(weapon.Proto.Weapon_SoundId_0 == 73);
                 bool	isRocket 	 = 	(weapon.Proto.Weapon_Anim1 == ANIM1_ROCKET_LAUNCHER);
                 bool	isHeavyRifle = 	(weapon.Proto.Weapon_Anim1 == ANIM1_HEAVY_RIFLE);
+                uint8 dir = GetDirection(crAttacker.HexX, crAttacker.HexY, crTarget.HexX, crTarget.HexY);
+                uint16 fixedStartX = crAttacker.HexX;
+                uint16 fixedStartY = crAttacker.HexY;
+                if (GetDistantion(crAttacker.HexX, crAttacker.HexY, crTarget.HexX, crTarget.HexY) > 1) {
+                    MoveHexByDir(fixedStartX, fixedStartY, dir, 1);
+                }
 
                 // muzzleData[0] - attacker X
                 // muzzleData[1] - attacker Y
@@ -787,230 +793,154 @@ void combat_result(array<uint>& data)
                 // muzzleData[6] - length (ms)
                 // muzzleData[7] - delay (burst only)
                 // muzzleData[8] - number of bullets (muzzle burst only)
+                muzzleData[0]= fixedStartX;
+                muzzleData[1]= fixedStartY;
+                muzzleData[3]= crTarget.HexX;
+                muzzleData[4]= crTarget.HexY;
 
                 if (isRanged) {
                     if (dmgType == DAMAGE_TYPE_NORMAL) {
                         if (!isBurst) {
                             if (isPistol || isRifle || isHeavyRifle ||isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=3000;
-
                                 CreateMuzzle(muzzleData, MUZZLE_TYPE_DEFAULT);
                             }
                         } else if (isBurst) {
                             if (isMinigun) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
+                                rounds /= 2;
+                                //Message("Minigun :: Rounds = " + rounds);
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=5000;
-                                muzzleData[7]=int(1200/20);
-                                muzzleData[8]=20;
+                                muzzleData[7]=int(ANIM_TIME_BURST_MINIGUN / rounds);
+                                muzzleData[8]=rounds;
                             } else if (isRifle && !isShotgun) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
+                                rounds = rounds * 2 / 3;
+                                //Message("Rifle :: Rounds = " + rounds);
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=5000;
-                                muzzleData[7]=100;
-                                muzzleData[8]=5;
+                                muzzleData[7]=int(ANIM_TIME_BURST_RIFLE / rounds);
+                                muzzleData[8]=rounds;
                             } else if (isHeavyRifle) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
+                                rounds = CLAMP(rounds * 4 / 5, 4, 10);
+                                //Message("Heavy Rifle :: Rounds = " + rounds);
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=5000;
-                                muzzleData[7]=200;
-                                muzzleData[8]=3;
+                                muzzleData[7]=int(ANIM_TIME_BURST_RIFLE2 / rounds);
+                                muzzleData[8]=rounds;
                             } else if (isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
+                                rounds = rounds * 2 / 3;
+                                //Message("SMG :: Rounds = " + rounds);
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=5000;
-                                muzzleData[7]=100;
-                                muzzleData[8]=5;
+                                muzzleData[7]=int(ANIM_TIME_BURST_SMG / rounds);
+                                muzzleData[8]=rounds;
                             } else if (isShotgun) {
-                                int rounds = 5;
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
+                                rounds = 3;
+                                //Message("Shotgun :: Rounds = " + rounds);
                                 muzzleData[2]= int(0xFFFFFF66);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFFCC6600);
-
                                 muzzleData[6]=3000;
-                                muzzleData[7]=10;
+                                muzzleData[7]=int(ANIM_TIME_BURST_SHOTGUN / rounds);
                                 muzzleData[8]=rounds;
                             }
-
                             CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_DEFAULT);
                         }
                     }
                     if (dmgType == DAMAGE_TYPE_LASER) {
                         if (!isBurst) {
-                            if (isPistol || isRifle || isHeavyRifle || isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
-                                muzzleData[2]= int(0x60FF0000);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
-                                muzzleData[5]= int(0xFFFF0000);
-
-                                muzzleData[7]=1000;
-
-                                CreateRay(muzzleData);
+                            if (isPistol || isSMG) {
+                                //Message("Laser Pistol or SMG Single :: Rounds = " + rounds);
+                                muzzleData[2]= int(0x60AA0000);
+                                muzzleData[5]= int(0xFFAA0000);
+                                muzzleData[6]=1200;
+                                CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT_MEDIUM);
+                            } else if (isRifle || isHeavyRifle) {
+                                //Message("Laser Rifle Single :: Rounds = " + rounds);
+                                muzzleData[2]= int(0x60AA0000);
+                                muzzleData[5]= int(0xFFAA0000);
+                                muzzleData[6]=1200;
+                                CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT_LARGE);
                             }
                         } else if (isBurst) {
                             if (isMinigun) {    // Gatling Laser
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
-                                muzzleData[2]= int(0xDDFF0000);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
-                                muzzleData[5]= int(0xFFFF0000);
-
-                                muzzleData[6]=10;
-                                muzzleData[7]=90;
-
-                                CreateBurstRay(muzzleData);
+                                rounds = rounds * 4 / 5;
+                                //Message("Laser SMG :: Rounds = " + rounds);
+                                muzzleData[2]= int(0x60AA0000);
+                                muzzleData[5]= int(0xFFAA0000);
+                                muzzleData[6]=1200;
+                                muzzleData[7]=int(ANIM_TIME_BURST_MINIGUN / rounds);
+                                muzzleData[8]=rounds;
+                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT_LARGE);
                             } else {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
-                                muzzleData[2]= int(0xDDFF0000);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
-                                muzzleData[5]= int(0xFFFF0000);
-
-                                muzzleData[6]=5;
-                                muzzleData[7]=100;
-
-                                CreateBurstRay(muzzleData);
+                                rounds = CLAMP(rounds * 2 / 3, 3, 8);
+                                //Message("Laser SMG :: Rounds = " + rounds);
+                                muzzleData[2]= int(0x60AA0000);
+                                muzzleData[5]= int(0xFFAA0000);
+                                muzzleData[6]=1200;
+                                muzzleData[7]=int(ANIM_TIME_BURST_SMG / rounds);
+                                muzzleData[8]=rounds;
+                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT_MEDIUM);
                             }
                         }
                     }
                     if (dmgType == DAMAGE_TYPE_FIRE) {
-                            if (isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
-                                muzzleData[2]= int(0xFFFFFF00);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
-                                muzzleData[5]= int(0xFFFFFF00);
-
-                                muzzleData[6]=1200;
-                                muzzleData[7]=300;
-                                muzzleData[8]=10;
-
-                                CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT);
-                            }
+                        if (isSMG) {
+                            muzzleData[2]= int(0xFFFFFF00);
+                            muzzleData[5]= int(0xFFFFFF00);
+                            muzzleData[6]=1200;
+                            muzzleData[7]=300;
+                            muzzleData[8]=10;
+                            CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT_MEDIUM);
+                        }
                     }
                     if (dmgType == DAMAGE_TYPE_PLASMA) {
                         if (!isBurst && !isFlamer) {
                             if (isPistol || isRifle || isHeavyRifle || isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
                                 muzzleData[2]= int(0xBB00FF00);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0x0000FF00);
-
-                                muzzleData[6]=1000;
-
-                                CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT);
+                                muzzleData[6]=1200;
+                                CreateMuzzle(muzzleData, MUZZLE_TYPE_BOLT_SMALL);
                             }
                         }
-
                         if (isBurst) {
                             if (isMinigun) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
                                 muzzleData[2]= int(0x6000FF00);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFF00FF00);
-
                                 muzzleData[6]=5000;
                                 muzzleData[7]=100;
                                 muzzleData[8]=10;
-
-                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT);
+                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT_SMALL);
                             }
                             if (isPistol || isRifle || isHeavyRifle || isSMG) {
-                                muzzleData[0]= crAttacker.HexX;
-                                muzzleData[1]= crAttacker.HexY;
                                 muzzleData[2]= int(0x6000FF00);
-
-                                muzzleData[3]= crTarget.HexX;
-                                muzzleData[4]= crTarget.HexY;
                                 muzzleData[5]= int(0xFF00FF00);
-
                                 muzzleData[6]=2000;
                                 muzzleData[7]=50;
                                 muzzleData[8]=10;
-
-                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT);
+                                CreateBurstMuzzle(muzzleData, MUZZLE_TYPE_BOLT_SMALL);
                             }
                         }
                     }
                     if (!isBurst && dmgType == DAMAGE_TYPE_ELECTR) {
                         if (isHeavyRifle) {
-                            muzzleData[0]= crAttacker.HexX;
-                            muzzleData[1]= crAttacker.HexY;
                             muzzleData[2]= int(0x66aa49ff);
-
-                            muzzleData[3]= crTarget.HexX;
-                            muzzleData[4]= crTarget.HexY;
                             muzzleData[5]= int(0xFF0000FF);
-
                             muzzleData[7]=200;
-
                             CreateRay(muzzleData);
                         }
                     }
                     if (isBurst && dmgType == DAMAGE_TYPE_ELECTR) {
                         if (isMinigun) {
-                            muzzleData[0]= crAttacker.HexX;
-                            muzzleData[1]= crAttacker.HexY;
                             muzzleData[2]= int(0xFF0000FF);
-
-                            muzzleData[3]= crTarget.HexX;
-                            muzzleData[4]= crTarget.HexY;
                             muzzleData[5]= int(0xFF0000FF);
-
                             muzzleData[6]=10;
                             muzzleData[7]=90;
-
                             CreateBurstRay(muzzleData);
                         }
                     }
