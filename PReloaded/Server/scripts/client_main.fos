@@ -1052,6 +1052,13 @@ void InitConfig()
             __ConfigCustomBorderColor = rgb_string2uint(val);
         }
 
+		// ShowBulletTracers
+        @val = GetConfigValue(CONFIG_FILE, CONFIG_RELOADED, "ShowBulletTracers");
+        if(valid(val) && val.length() > 0)
+        {
+            __ConfigShowBulletTracers = string2bool(val);
+        }
+
         // WallRoofTransparency
         @val = GetConfigValue(CONFIG_FILE,CONFIG_RELOADED, "WallRoofTransparency");
         if(valid(val) && val.length() > 0)
