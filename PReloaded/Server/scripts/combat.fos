@@ -982,11 +982,13 @@ void CombatAttack(Critter& cr, Critter& target, ProtoItem& weapon, uint8 weaponM
 
     if (!attackSoundAlreadyPlayed) {
         uint8 soundUse = '1';
+        soundUse += _WeaponModeUse(weaponMode);
+        /*
         if (_WeaponModeUse(weaponMode) == 0) {
             soundUse = '1';
         } else if (_WeaponModeUse(weaponMode) == 1) {
             soundUse = '2';
-        }
+        }*/
         //cr.Say(SAY_NORM, "Attack sound = " + _WeaponSoundId(weapon, _WeaponModeUse(weaponMode)) + ", weaponModeUse = " + _WeaponModeUse(weaponMode) + ", weapMode = " + weaponMode + ", soundUse = " + soundUse);
         cr.PlaySound('W', SOUND_WEAPON_USE, _WeaponSoundId(weapon, _WeaponModeUse(weaponMode)), soundUse, true);
     }
