@@ -2626,6 +2626,11 @@
 {174005}{}{}
 {174010}{}{6}
 
+# Building Site, pid 76, base 176000
+{176000}{}{Building Site}
+{176005}{}{}
+{176010}{}{6}
+
 # Brahmin Ranch, pid 78, base 178000
 {178000}{}{Brahmin Ranch}
 {178005}{}{A brahmin ranch waiting for herd to be delivered.}

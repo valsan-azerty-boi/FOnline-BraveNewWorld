@@ -562,7 +562,9 @@ uint r_CreateSite(Critter& player, Critter@ builder)
     DisbandFollower(player, builder, true);
     DeleteNpc(builder);
     array<Critter@> group;
-    uint            locId =0;
+    uint            locId = CreateLocationForGroup(player, LOCATION_BuildingSite, player.WorldX, player.WorldY, group);
+    if(locId == 0)
+        return FORCE_DIALOG_BUILDER_EXCEPTION;
 
     Location@ loc = GetLocation(locId);
 
@@ -598,7 +600,8 @@ uint r_CreateSite(Critter& player, Critter@ builder)
 }
 bool d_OnSite(Critter& player, Critter@)
 {
-    return false;
+    Map@ map = player.GetMap();
+    return valid(map) && map.GetProtoId() == MAP_HQ_BuildingSite;
 }
 bool d_CanTalkWithBuilder(Critter& player, Critter@)
 {
