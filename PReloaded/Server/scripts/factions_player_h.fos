@@ -16,11 +16,11 @@
 #define LOCATION_BLADES         (204)
 #define LOCATION_SCRAPHEAP      (205)
 #define LOCATION_CAVE           (207)
-#define LOCATION_CAVE2          (75)
+#define LOCATION_CAVE2          (201)
 #define LOCATION_BUNKER         (208)
 #define LOCATION_DEPOT          (210)
-#define LOCATION_GASSTATION     (245)
-#define LOCATION_TENTS          (246)
+#define LOCATION_GASSTATION     (216)
+#define LOCATION_TENTS          (215)
 
 // Small
 #define CAVE_COST               (30000)
