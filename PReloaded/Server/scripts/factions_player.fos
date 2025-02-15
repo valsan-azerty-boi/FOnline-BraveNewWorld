@@ -57,7 +57,7 @@ uint r_ChooseCave(Critter& player, Critter@ npc)
 uint r_ChooseCave2(Critter& player, Critter@ npc)
 {
     COST(player) = CAVE2_COST;
-    return ChooseLocation(player, npc, LOCATION_Cave2HQ);
+    return ChooseLocation(player, npc, LOCATION_CAVE2);
 }
 
 uint r_ChooseCamp(Critter& player, Critter@ npc)
@@ -68,12 +68,12 @@ uint r_ChooseCamp(Critter& player, Critter@ npc)
 uint r_ChooseTents(Critter& player, Critter@ npc)
 {
     COST(player) = TENTS_COST;
-    return ChooseLocation(player, npc, LOCATION_TentsHQTrapperBase);
+    return ChooseLocation(player, npc, LOCATION_TENTS);
 }
 uint r_ChooseDepot(Critter& player, Critter@ npc)
 {
     COST(player) = DEPOT_COST;
-    return ChooseLocation(player, npc, LOCATION_DepotHQ);
+    return ChooseLocation(player, npc, LOCATION_DEPOT);
 }
 uint r_ChooseScrapheap(Critter& player, Critter@ npc)
 {
@@ -83,7 +83,7 @@ uint r_ChooseScrapheap(Critter& player, Critter@ npc)
 uint r_ChooseGasStation(Critter& player, Critter@ npc)
 {
     COST(player) = GASSTATION_COST;
-    return ChooseLocation(player, npc, LOCATION_GasstationHQ);
+    return ChooseLocation(player, npc, LOCATION_GASSTATION);
 }
 uint r_ChooseBunker(Critter& player, Critter@ npc)
 {
