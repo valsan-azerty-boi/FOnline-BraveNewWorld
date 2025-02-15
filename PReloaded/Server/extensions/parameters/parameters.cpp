@@ -319,10 +319,19 @@ EXPORT int getParam_MoveAp(CritterMutual& cr, uint)
 	return CLAMP(val, 0, 9999);
 }
 
+#define PID_BAG                             (46)
+#define PID_BACKPACK                        (90)
+#define PID_BROWN_BAG                       (93)
+
 EXPORT int getParam_MaxWeight(CritterMutual& cr, uint)
 {
+
 	int val = max(cr.Params[ST_CARRY_WEIGHT] + cr.Params[ST_CARRY_WEIGHT_EXT], 0);
-	val += CONVERT_GRAMM(25 + getParam_Strength(cr, 0) * 25);
+	int extra = 0;
+	if (cr.ItemSlotExt->Proto->ProtoId == PID_BACKPACK || cr.ItemSlotMain->Proto->ProtoId == PID_BACKPACK) {
+		extra += 50 * 2.20462;
+	}
+	val += CONVERT_GRAMM(25 + getParam_Strength(cr, 0) * 25 + extra);
 	if(cr.Params[PE_PACK_RAT])
 	{
 		val*=4;

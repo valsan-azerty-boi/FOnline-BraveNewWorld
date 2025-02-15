@@ -55,7 +55,7 @@ Weight=1360
 SoundId=48
 Cost=25
 Material=7
-Container_Volume=2000
+Container_Volume=100
 Container_MagicHandsGrnd=1
 
 [Proto]
@@ -186,7 +186,7 @@ Container_Volume=2500
 
 [Proto]
 ProtoId=90
-Type=8
+Type=0
 PicMap=art\items\backpack.frm
 PicInv=art\inven\pack2c.frm
 Flags=402653726
@@ -196,7 +196,7 @@ Weight=2267
 SoundId=48
 Cost=100
 Material=7
-Container_Volume=4000
+Container_Volume=40
 Container_MagicHandsGrnd=1
 
 [Proto]
@@ -211,7 +211,7 @@ Weight=1360
 SoundId=48
 Cost=150
 Material=7
-Container_Volume=2000
+Container_Volume=100
 Container_MagicHandsGrnd=1
 
 [Proto]
