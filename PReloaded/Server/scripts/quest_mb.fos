@@ -411,7 +411,7 @@ void _MBFirstFloor(Map& map, bool firstTime)
 		uint            critCount = map.GetCritters(0, FIND_KO | FIND_ONLY_NPC, critters);
 		for(uint i = 0; i < critCount; i++)
 		{
-			if(critters[i].Cond == COND_KNOCKOUT) critters[i].ToDead(1, null);
+			if(critters[i].Cond == CRITTER_CONDITION_KNOCKOUT) critters[i].ToDead(1, null);
 		}			
 		
 		array<Item@> doors;
@@ -435,7 +435,7 @@ void _MBFirstFloor(Map& map, bool firstTime)
 				case 4: 	{ skrytka.AddItem(PID_NCR_ARMOR, 1, 0); skrytka.AddItem(PID_MIRROR_SHADES, 1, 0); break;}								
 				case 5: 	{ skrytka.AddItem(PID_ENCLAVE_COMBAT_ARMOR, 1, 0); skrytka.AddItem(PID_ENCLAVE_COMBAT_HELMET, 1, 0); break;}
 				case 6: 	{ skrytka.AddItem(PID_DESERT_COMBAT_ARMOR, 1, 0); skrytka.AddItem(PID_DESERT_COMBAT_HELMET, 1, 0); break;}
-				case 7: 	{ skrytka.AddItem(PID_KEEPBRIGE_ROBE, 1, 0); break;}
+				case 7: 	{ skrytka.AddItem(PID_BRIDGEKEEPER_ROBE, 1, 0); break;}
 				case 8: 	{ skrytka.AddItem(PID_POWERED_ARMOR, 1, 0); skrytka.AddItem(PID_POWER_HELMET, 1, 0); break;}
 				case 9: 	{ skrytka.AddItem(PID_HARDENED_POWER_ARMOR, 1, 0); skrytka.AddItem(PID_HARDENED_POWER_HELMET, 1, 0); break;}
 				default: break;
@@ -456,7 +456,7 @@ void _MBFirstFloor(Map& map, bool firstTime)
 				case 4: 	{ skrytka2.AddItem(PID_NCR_ARMOR, 1, 0); skrytka2.AddItem(PID_MIRROR_SHADES, 1, 0); break;}
 				case 5: 	{ skrytka2.AddItem(PID_ENCLAVE_COMBAT_ARMOR, 1, 0); skrytka2.AddItem(PID_ENCLAVE_COMBAT_HELMET, 1, 0); break;}
 				case 6: 	{ skrytka2.AddItem(PID_DESERT_COMBAT_ARMOR, 1, 0); skrytka2.AddItem(PID_DESERT_COMBAT_HELMET, 1, 0); break;}
-				case 7: 	{ skrytka2.AddItem(PID_KEEPBRIGE_ROBE, 1, 0); break;}
+				case 7: 	{ skrytka2.AddItem(PID_BRIDGEKEEPER_ROBE, 1, 0); break;}
 				case 8: 	{ skrytka2.AddItem(PID_POWERED_ARMOR, 1, 0); skrytka2.AddItem(PID_POWER_HELMET, 1, 0); break;}
 				case 9: 	{ skrytka2.AddItem(PID_HARDENED_POWER_ARMOR, 1, 0); skrytka2.AddItem(PID_HARDENED_POWER_HELMET, 1, 0); break;}
 				default: break;
@@ -650,7 +650,7 @@ void _MBSecondFloor(Map& map, bool firstTime)
 				case 4: 	{ SpawnBuffItem(skrytka4, PID_NCR_ARMOR); SpawnBuffItem(skrytka4, PID_MIRROR_SHADES); break;}				
 				case 5: 	{ SpawnBuffItem(skrytka4, PID_ENCLAVE_COMBAT_ARMOR); SpawnBuffItem(skrytka4, PID_ENCLAVE_COMBAT_HELMET); break;}
 				case 6: 	{ SpawnBuffItem(skrytka4, PID_DESERT_COMBAT_ARMOR); SpawnBuffItem(skrytka4, PID_DESERT_COMBAT_HELMET); break;}
-				case 7: 	{ SpawnBuffItem(skrytka4, PID_KEEPBRIGE_ROBE); break;}
+				case 7: 	{ SpawnBuffItem(skrytka4, PID_BRIDGEKEEPER_ROBE); break;}
 				default: break;
 			}
 		}		
@@ -988,7 +988,7 @@ bool s_RepairSurfaceGenerator(Critter& player, Scenery& terminal, int skill, Ite
                 return true;
             }
             player.Say(SAY_NETMSG, "There's large amount of dust inside, your attempt to blow it away ends up with your face full of unhealthy dust and you inhaling some of it.");
-            InjureCritter(player, Random(30,50), DAMAGE_NORMAL, (player.Dir + 3) % 6, 0);
+            InjureCritter(player, Random(30,50), DAMAGE_TYPE_NORMAL, (player.Dir + 3) % 6, 0);
             player.Say(SAY_NETMSG, "You clean the contacts and throw away some burned out circuits.");
             SetLvar(loc.Id, LLVAR_q_mb_location_state, LOC_STATE_SURFACE_CLEAN);
 			player.StatBase[ST_EXPERIENCE] += 1500;

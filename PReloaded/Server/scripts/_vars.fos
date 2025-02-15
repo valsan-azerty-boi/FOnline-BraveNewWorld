@@ -421,6 +421,8 @@
 #define LVAR_q_secret_factory                   (19905)
 #define LVAR_q_secret_hospital                  (19906)
 #define LVAR_q_secret_bus_stop                  (19907)
+#define LLVAR_q_mb_uber_bot_terminal            (19924)  // 7325 old S2
+#define LLVAR_q_mb_uber_bot_status              (19925)  // 7326 old S2
 
 
 //	PLAYER SPECIFIC								#20000
@@ -2518,6 +2520,15 @@ Landers Point caravan packer quest variable.
 **********
 
 
+   $	19924	1	q_mb_uber_bot_terminal	0	0	1	4
+**********
+   Variable for johnnys military base quest == door to uber bot at lvl2 opened in dialogue with comp
+**********
+
+   $	19925	1	q_mb_uber_bot_status	0	0	1	4
+**********
+   Variable for johnnys military base quest == uber bot status depending on the dialogue in the comp at lvl2
+**********
 //
 //	PLAYER SPECIFIC								#20000
 //

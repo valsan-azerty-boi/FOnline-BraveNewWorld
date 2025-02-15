@@ -483,6 +483,22 @@
 {1035}{}{08vats}
 {1036}{}{elevato1:25, elevator:25, electri1:15, electric:15, clank:10, clank1:10}
 
+# Map 103, base 1040
+{1040}{}{Ruined Military Bunker Surface}
+{1045}{}{08vats}
+{1045}{}{14necro}
+{1046}{}{gntlwin1:20, gntlwind:20, dogbark:20, dogbark:20, gustwin1:10, gustwind:10}
+
+# Map 104, base 1050
+{1050}{}{Ruined Military Bunker Level 1}
+{1055}{}{08vats}
+{1056}{}{elevato1:25, elevator:25, electri1:15, electric:15, clank:10, clank1:10}
+
+# Map 105, base 1060
+{1060}{}{Ruined Military Bunker Level 2}
+{1065}{}{08vats}
+{1066}{}{elevato1:25, elevator:25, electri1:15, electric:15, clank:10, clank1:10}
+
 # Map 106, base 1070
 {1070}{}{Q Ruined Military Bunker}
 {1075}{}{07desert}
@@ -2626,13 +2642,23 @@
 {174005}{}{}
 {174010}{}{6}
 
+# Building Site, pid 76, base 176000
+{176000}{}{Building Site}
+{176005}{}{}
+{176010}{}{6}
+
 # Brahmin Ranch, pid 78, base 178000
 {178000}{}{Brahmin Ranch}
 {178005}{}{A brahmin ranch waiting for herd to be delivered.}
 {178010}{}{6}
 
-# Dead Body, pid 80, base 180000
-{180000}{}{Dead Body}
+# Ruined Military Base, pid 79, base 179000
+{179000}{}{Ruined Military Base}
+{179005}{}{An abandoned military bunker. You can see the big gates from the distance.}
+{179010}{}{12}
+
+# Special Encounter: Dead Body, pid 80, base 180000
+{180000}{}{Special Encounter: Dead Body}
 {180005}{}{You see a dead body under a tree.}
 {180010}{}{6}
 

@@ -306,32 +306,21 @@ bool d_CanChangeLaws(Critter& player, Critter@ npc)
 // General check, here any conditions be added, it's possible to disable TC feature here.
 bool d_CanTakeOver(Critter& player, Critter@ npc)
 {
-    //Log("d_CanTakeOver");
 	ITown@ town = RetrieveTown(player);
 
-    if(town.GetCountdown() > 0) {
-        //Log("d_CanTakeOver - town.GetCountdown() > 0");
+    if(town.GetCountdown() > 0)
         return false;
-    }
 
-    if(town.GetAreaCount() == 0) {
-        //Log("d_CanTakeOver - town.GetCountdown() > 0");
+    if(town.GetAreaCount() == 0)
         return false;
-    }
 
-    if(town.GetVersion() == TOWN_VERSION_INFLUENCE) {
-        //Log("d_CanTakeOver - town.GetCountdown() > 0");
+    if(town.GetVersion() == TOWN_VERSION_INFLUENCE)
         return false;
-    }
 
-    if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW) {
-        //Log("d_CanTakeOver - TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW //// return: (town.GetStatus() == TOWN_STATUS_CAN_TAKE) || (town.GetCountdown() > 0)");
+    if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW)
         return((town.GetStatus() == TOWN_STATUS_CAN_TAKE) || (town.GetCountdown() > 0));
-    }
-    else if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN) {
-        //Log("d_CanTakeOver - TOWN_VERSION_CAPTURE_COUNTDOWN");
+    else if(town.GetVersion() == TOWN_VERSION_CAPTURE_COUNTDOWN)
         return true;
-    }
     return true;
 }
 
