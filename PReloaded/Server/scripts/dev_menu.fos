@@ -104,6 +104,10 @@ void unsafe_NeutralizeCritter(Critter& player, int crId, int p1, int p2, string@
     Critter@ cr = GetDevCritter(player, crId);
     if(valid(cr))
     {
+        cr.ParamBase[TO_EX_ANIM_INTERRUPT] = GetTick();
+        if (cr.Param[ST_EX_ATTACK_EVENT_ID] > 0) {
+            EraseTimeEvent(cr.Param[ST_EX_ATTACK_EVENT_ID]);
+        }
         if(cr.IsKnockout())
         {
             cr.StatBase[ST_CURRENT_AP] = 100 * cr.Stat[ST_ACTION_POINTS];

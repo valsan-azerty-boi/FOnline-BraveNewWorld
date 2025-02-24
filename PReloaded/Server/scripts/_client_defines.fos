@@ -48,6 +48,7 @@
 #define FONT_API_START                     (10)
 
 // Font flags
+#define FT_CENTERX                         (0x0004)												   
 #define FT_CENTERXY                        (0x000C)
 
 // New script screens

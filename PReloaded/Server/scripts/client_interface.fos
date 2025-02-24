@@ -24,6 +24,8 @@
 #include "polygon_towns.fos"
 #include "prod_ingredients_h.fos"
 
+#include "client/client_drawing_h.fos"
+
 /*
    GMT MARK : add
    #include "client_gmtools_h.fos"
@@ -44,6 +46,7 @@ import void DrawQuestTracker() from "client/client_QuestTracker";
 import void DrawInventoryTracker() from "client/client_InventoryTracker";
 import void DrawCarTracker() from "client/client_CarTracker";
 import void DrawGuiImage() from "client/client_GuiImage";
+import void DrawPsychoImage() from "client/client_psychoFx";
 import void DrawMapGreeterMessage() from "client/client_MapGreeter";
 
 import bool IsPossessMode() from "client_dev_menu";
@@ -499,6 +502,7 @@ void render_iface(uint layer)
         DrawCustomBorder();
         DrawCarTracker();
         DrawGuiImage();
+        DrawPsychoImage();
         RenderHexThrowing();
         RenderHexShoting();
 
@@ -740,6 +744,12 @@ void render_iface(uint layer)
 		DrawQuestTracker();
         DrawInventoryTracker();
         DrawMapGreeterMessage();
+
+        // weapon muzzle and rays by Vice Dice (bulet tracers)
+        DrawRays();
+        DrawBurstRays();
+		DrawMuzzleFlashes();
+		DrawBurstMuzzles();
     }
 
     if((layer == 100 || layer == 101) && __WorldmapActive)

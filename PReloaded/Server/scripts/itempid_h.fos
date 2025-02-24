@@ -383,7 +383,7 @@ enum AmmunitionBullet
     PID_SHOTGUN_SHELLS_FLECHETTE                            = 574,
     PID_SHOTGUN_SHELLS_SLUG                                 = 575,
     PID_SHOTGUN_SHELLS_EMP                                  = 576,
-    PID_40MM_GRENADE					                    = 621,	
+    PID_40MM_GRENADE					                    = 621,
     PID_SHOTGUN_DRAGON_BREATH_SHELLS                        = 850
 
 };
@@ -635,8 +635,8 @@ enum ContainerGrave
 
 enum ContainerBackpack
 {
-    PID_BAG                                                         = 46,
-    PID_BACKPACK                                            = 90,
+    PID_BAG                                                 = 46,
+//    PID_BACKPACK                                            = 90,
     PID_BROWN_BAG                                           = 93
 };
 
@@ -644,7 +644,7 @@ enum ContainerBody
 {
     PID_ALIEN_SIDE                                          = 107,
     PID_ALIEN_FORWARD                                       = 108,
-    PID_VAULT_DWELLER_BONES                         = 211,
+    PID_VAULT_DWELLER_BONES                                 = 211,
     PID_REMAINSOF_GIZMO                                     = 213,
     PID_HUMAN_BONES                                         = 250,
     PID_DEAD_REDSHIRT_0                                     = 526,

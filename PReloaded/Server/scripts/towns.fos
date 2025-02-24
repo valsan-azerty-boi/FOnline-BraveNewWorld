@@ -101,9 +101,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 3
+             .SetTotalMemberRequirement(1) // 1 test, default 3
+			 .SetControlMemberRequirement(1) // 1 test, default 3
              .SetInfluenceMemberRequirement(99)
              #endif
              .SetSpeechModifier(0)
@@ -112,7 +112,7 @@ void InitTowns()
              .SetHour(21)
              .SetCaptureArea(modoc_area)    // General store + church + area near well and water tank
              .SetRewardStartCaps(900)
-             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
 			 .SetMilitiaEnabled()
              );
 
@@ -131,9 +131,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 3
+             .SetTotalMemberRequirement(1) // 1 test, default 3
+			 .SetControlMemberRequirement(1) // 1 test, default 3
              #endif
              .SetSpeechModifier(0)
              .SetLimboContainer(map_klamath.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
@@ -161,9 +161,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 3
+             .SetTotalMemberRequirement(1) // 1 test, default 3
+			 .SetControlMemberRequirement(1) // 1 test, default 3
              #endif
              .SetSpeechModifier(0)
              .SetLimboContainer(map_gecko.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
@@ -173,7 +173,7 @@ void InitTowns()
 
              .SetRewardStartCaps(1500)
              .SetInfluenceMemberRequirement(99)
-             .SetVersion(TOWN_VERSION_CONTROL)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
 			 .SetMilitiaEnabled()
              );
 
@@ -192,9 +192,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 5
+             .SetTotalMemberRequirement(1) // 1 test, default 5
+			 .SetControlMemberRequirement(1) // 1 test, default 5
              #endif
              .SetSpeechModifier(0)
              .SetLimboContainer(map_broken.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
@@ -203,7 +203,7 @@ void InitTowns()
              .SetCaptureArea(bh_area)
              .SetRewardStartCaps(2000)
              .SetInfluenceMemberRequirement(99)
-             .SetVersion(TOWN_VERSION_INFLUENCE)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
 			 .SetMilitiaEnabled()
              );
 
@@ -222,9 +222,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 3
+             .SetTotalMemberRequirement(1) // 1 test, default 3
+			 .SetControlMemberRequirement(1) // 1 test, default 3
              #endif
              .SetSpeechModifier(0)
              .SetLimboContainer(map_den.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
@@ -252,9 +252,9 @@ void InitTowns()
              #endif
 
              #ifndef __DEBUG__
-             .SetNearbyMemberRequirement(1)
-             .SetTotalMemberRequirement(1)
-			 .SetControlMemberRequirement(1)
+             .SetNearbyMemberRequirement(1) // 1 test, default 5
+             .SetTotalMemberRequirement(1) // 1 test, default 5
+			 .SetControlMemberRequirement(1) // 1 test, default 5
              #endif
              .SetSpeechModifier(0)
              .SetLimboContainer(map_redding.GetItem(lx, ly, PID_FOOTLOCKER_CLEAN_LEFT))
@@ -263,7 +263,7 @@ void InitTowns()
              .SetCaptureArea(redding_area)
              .SetRewardStartCaps(1700)
              .SetInfluenceMemberRequirement(99)
-             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN_WINDOW)
+             .SetVersion(TOWN_VERSION_CAPTURE_COUNTDOWN)
 			 .SetMilitiaEnabled()
              );
 

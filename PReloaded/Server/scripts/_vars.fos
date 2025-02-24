@@ -221,6 +221,7 @@
 #define LVAR_q_hub_risto_cave_item              (6821)
 #define LVAR_q_hub_risto_cave_node              (6822)
 #define LVAR_q_hub_risto_cave_loc               (6823)
+#define LVAR_q_hub_jkelly_rats                  (6824)
 
 
 
@@ -420,6 +421,8 @@
 #define LVAR_q_secret_factory                   (19905)
 #define LVAR_q_secret_hospital                  (19906)
 #define LVAR_q_secret_bus_stop                  (19907)
+#define LLVAR_q_mb_uber_bot_terminal            (19924)  // 7325 old S2
+#define LLVAR_q_mb_uber_bot_status              (19925)  // 7326 old S2
 
 
 //	PLAYER SPECIFIC								#20000
@@ -434,6 +437,21 @@
 #define LVAR_npc_name_nicktype                  (20009)
 #define LVAR_npc_name_surname                   (20010)
 
+//  PLAYER COUNTERS ON STACKING ITEMS
+#define LVAR_psycho_dose                        (20200)
+#define LVAR_jet_dose                           (20201)
+#define LVAR_first_aid_use                      (20202)
+#define LVAR_doctor_use                         (20203)
+
+//  PLAYER XP FOR NON-COMBAT SKILLS
+#define LVAR_skill_xp_lockpick                  (20301)
+#define LVAR_skill_xp_steal                     (20302)
+#define LVAR_skill_xp_science                   (20303)
+#define LVAR_skill_xp_repair                    (20304)
+#define LVAR_skill_xp_speech                    (20305)
+#define LVAR_skill_xp_barter                    (20306)
+#define LVAR_skill_xp_gambling                  (20307)
+#define LVAR_skill_xp_outdoors                  (20308)
 
 //	FEATURES									#21000
 #define LVAR_Book_Barter	                    (21001)
@@ -1532,6 +1550,10 @@
 
 **********
 
+   $	6824	1	q_hub_jkelly_rats	    0	0	99	1
+**********
+
+**********
 
 
 //
@@ -2498,6 +2520,15 @@ Landers Point caravan packer quest variable.
 **********
 
 
+   $	19924	1	q_mb_uber_bot_terminal	0	0	1	4
+**********
+   Variable for johnnys military base quest == door to uber bot at lvl2 opened in dialogue with comp
+**********
+
+   $	19925	1	q_mb_uber_bot_status	0	0	1	4
+**********
+   Variable for johnnys military base quest == uber bot status depending on the dialogue in the comp at lvl2
+**********
 //
 //	PLAYER SPECIFIC								#20000
 //
@@ -2553,33 +2584,101 @@ Landers Point caravan packer quest variable.
 
 **********
 
+//
+//  PLAYER UTILITIES (USAGE COUNTERS, ETC)
+//
+
+$	20200	1	LVAR_psycho_dose            0	0   100     0
+************
+
+************
+
+$	20201	1	LVAR_jet_dose            0	0   100     0
+************
+
+************
+
+$	20202	1	LVAR_first_aid_use            0	0   100     0
+************
+
+************
+
+$	20203	1	LVAR_doctor_use            0	0   100     0
+************
+
+************
+
+//
+//  PLAYER XP FOR NON-COMBAT SKILLS             #20300
+//
+
+$	20301	1	skill_xp_lockpick           0   0   0   4
+************
+
+************
+
+$	20302	1	skill_xp_steal              0   0   0   4
+************
+
+************
+
+$	20303	1	skill_xp_science            0   0   0   4
+************
+
+************
+
+$	20304	1	skill_xp_repair             0   0   0   4
+************
+
+************
+
+$	20305	1	skill_xp_speech             0   0   0   4
+************
+
+************
+
+$	20306	1	skill_xp_barter             0   0   0   4
+************
+
+************
+
+$	20307	1	skill_xp_gambling           0   0   0   4
+************
+
+************
+
+$	20308	1	skill_xp_outdoors           0   0   0   4
+************
+
+************
+
 
 //
 //	FEATURES									#21000
 //
 
 
-$	21001	1	LVAR_FO2077_Book_Barter  0	0	10	0
+$	21001	1	LVAR_FO2077_Book_Barter  0	0	0	4
 ************
 
 ************
 
-$	21002	1	LVAR_FO2077_Book_FirstAid  0	0	10	0
+$	21002	1	LVAR_FO2077_Book_FirstAid  0	0	0	4
 ************
 
 ************
 
-$	21003	1	LVAR_FO2077_Book_Outdoorsman  0	0	10	0
+$	21003	1	LVAR_FO2077_Book_Outdoorsman  0	0	0	4
 ************
 
 ************
 
-$	21004	1	LVAR_FO2077_Book_Repair   0	0	10	0
+$	21004	1	LVAR_FO2077_Book_Repair   0	0	0	4
 ************
 
 ************
 
-$	21005	1	LVAR_FO2077_Book_Science  0	0	10	0
+$	21005	1	LVAR_FO2077_Book_Science  0	0	0	4
 ************
 0 - ksiazka nie zostala jeszcze przeczytana
 1 - ksiazka zostala przeczytana
@@ -2587,7 +2686,7 @@ $	21005	1	LVAR_FO2077_Book_Science  0	0	10	0
 Added by Kilgore 28.01.2011
 ************
 
-$	21006	1	LVAR_FO2077_Book_SmallGuns  0	0	10	0
+$	21006	1	LVAR_FO2077_Book_SmallGuns  0	0	0	4
 ************
 
 ************

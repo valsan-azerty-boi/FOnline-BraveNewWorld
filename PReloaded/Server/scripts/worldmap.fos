@@ -37,6 +37,8 @@ import void AddEncounterContainers(Map@ map, array<Critter@>@ critters) from "en
 import void AddSpecialBonusEncounterBoss(Item@ it) from "item_bonus";
 import bool IsItemCraftable(uint16 pid) from "fix_boy";
 
+import void GainSkillXp(Critter& cr, uint skillNum, int xp) from "skills";
+
 #define STR_GROUP    # (g)    (20000000 + g)
 
 class CCheck
@@ -1602,16 +1604,38 @@ void ActionFighting(array<Critter@>& npcL, array<Critter@>& npcR)
             // todo: reputation prorities?
             if(nlIsNpc)
             {
+                //Log("LEFT critter group fighting.");
                 // AddAttackPlane(nl, nr.IsPlayer() ? Random(pr, pr+20) : Random(pr, pr+10), nr);
-                AddAttackPlane(nl, Random(pr, pr + 20), nr);
-                nl.AddEnemyInStack(nr.Id);
+                if (!nr.IsPlayer()) {
+                    AddAttackPlane(nl, Random(pr, pr + 20), nr);
+                    nl.AddEnemyInStack(nr.Id);
+                } else {
+                    if (nr.Perk[PE_GHOST] == 0) {
+                        //Log("Encounter add attack plane: " + nl.Name + " -> " + nr.Name);
+                        AddAttackPlane(nl, Random(pr, pr + 20), nr);
+                        nl.AddEnemyInStack(nr.Id);
+                    } else {
+                        //Log("Encounter add attack plane averted by ghost: " + nl.Name + " -> " + nr.Name);
+                    }
+                }
                 nl.Wait(Random(5000, 7000));
             }
             if(nr.IsNpc())
             {
+                //Log("RIGHT critter group fighting.");
                 // AddAttackPlane(nr, nl.IsPlayer() ? Random(pr, pr+20) : Random(pr, pr+10), nl);
-                AddAttackPlane(nr, Random(pr, pr + 20), nl);
-                nr.AddEnemyInStack(nl.Id);
+                if (!nl.IsPlayer()) {
+                    AddAttackPlane(nr, Random(pr, pr + 20), nl);
+                    nr.AddEnemyInStack(nl.Id);
+                } else {
+                    if (nl.Perk[PE_GHOST] == 0) {
+                        //Log("Encounter add attack plane: " + nr.Name + " -> " + nl.Name);
+                        AddAttackPlane(nr, Random(pr, pr + 20), nl);
+                        nr.AddEnemyInStack(nl.Id);
+                    } else {
+                        //Log("Encounter add attack plane averted by ghost: " + nl.Name + " -> " + nl.Name);
+                    }
+                }
                 nr.Wait(Random(5000, 7000));
             }
         }
@@ -2163,6 +2187,7 @@ void FindEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& enco
     }
 
     bool giveReward = false; // reward for averting encounter
+    bool giveSkillGain = false;
     bool caravan = false;
 	bool playerCaravan = valid(car) && _IsCaravanCar(car.GetProtoId());
 
@@ -2393,11 +2418,12 @@ void FindEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& enco
 					//if(!fe.TurnBased)
 					//{
 						////Log("!fe.TurnBased= " + fe.TurnBased);
-						if(!IsCaravanLeader(leader) && outdoorsman >= Random(1, 100))
-						{
+						if (!IsCaravanLeader(leader) && outdoorsman >= Random(1, 100)) {
 							enc.Ask(SAY_ENCOUNTER_ANY, leader, false);
 							waitForAnswer = true;
 							giveReward = true;
+						} else {
+						    giveSkillGain = true;
 						}
 					//}
 					//else
@@ -2445,12 +2471,29 @@ void FindEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& enco
         return;
     }
 
-    if(giveReward)       // here, because creation of encounter might fail
-    {
+    if (giveReward) {       // here, because creation of encounter might fail
+        //  give outdoorsman XP when dodge encounter option activated
+        int factor = 110 + CLAMP(zone.Difficulty, 0, 100) - guide.Skill[SK_OUTDOORSMAN];
+        factor = CLAMP(factor, 10, 100);
+        int skillXp = Random(1, factor / 10);
+        //Log("ENCOUNTER GIVE XP FOR DODGING = " + skillXp + ", zone difficulty = " + zone.Difficulty);
+        if (skillXp > 0) {
+            GainSkillXp(guide, SK_OUTDOORSMAN, skillXp);
+        }
+        //  give normal xp
         if(guide.Skill[SK_OUTDOORSMAN] <= 95)
             GuideReward(leader, guide, 100 - guide.Skill[SK_OUTDOORSMAN] + zone.Difficulty);
         else
             GuideReward(leader, guide, 5 + zone.Difficulty);
+    } else if (giveSkillGain && guide.Skill[SK_OUTDOORSMAN] < 100) {
+        //  give outdoorsman XP
+        int factor = CLAMP(zone.Difficulty, 0, 100) - guide.Skill[SK_OUTDOORSMAN] / 2;
+        //Log("factor = " + factor);
+        factor = CLAMP(factor, 5, 50);
+        //Log("factor = " + factor);
+        int skillXp = Random(1, factor / 5);
+        //Log("ENCOUNTER GIVE XP = " + skillXp + ", zone difficulty = " + zone.Difficulty);
+        GainSkillXp(guide, SK_OUTDOORSMAN, skillXp);
     }
     uint t = GetTick() - start;
     _AdminLog(leader, "FindEncounter: " + t + "ms.");
@@ -2460,7 +2503,7 @@ void FindEncounter(array<Critter@>& group, Item@ car, uint x, uint y, uint& enco
 
 void InviteToEncounter(array<Critter@>& group, Item@ car, uint encounterDescriptor, int combatMode, uint& mapId, uint16& hexX, uint16& hexY, uint8& dir)
 {
-    //if(group[0].IsPlayer()) Log("InviteToEncounter: START.");
+    if (group[0].IsPlayer()) Log("InviteToEncounter: START.");
 	uint start = GetTick();
     mapId = 0;
 
@@ -2518,6 +2561,16 @@ void InviteToEncounter(array<Critter@>& group, Item@ car, uint encounterDescript
         dir += 3;
         if(dir > 5)
             dir -= 6;
+
+        //Log("Is player");
+        if (group[0].IsPlayer()) {
+            Critter@ player = group[0];
+            //Log("Is player GHOST?");
+            if (player.Perk[PE_GHOST] > 0) {
+                //Log("Hiding player!");
+                _EnableSneak(player);
+            }
+        }
     }
 
     if(valid(car))

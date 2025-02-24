@@ -188,5 +188,6 @@
 
 # pragma globalvar "bool __ConfigFollowerExperience = false"
 
+# pragma globalvar "bool __ConfigShowBulletTracers = true"													  
 #endif // __CLIENT
 #endif // __GLOBALVARS__

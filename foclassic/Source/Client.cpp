@@ -7777,7 +7777,7 @@ void FOClient::CrittersProcess()
     }
 
 	if (Chosen->IsWalkAnim()) {
-		WriteLog("FOClient::CrittersProcess - WALK ANIM \tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration);
+		//WriteLog("FOClient::CrittersProcess - WALK ANIM \tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration);
 		// Ap regeneration while running or walking
 		if (Chosen->GetParam(ST_CURRENT_AP) < Chosen->GetParam(ST_ACTION_POINTS) && !IsTurnBased)
 		{
@@ -7803,7 +7803,7 @@ void FOClient::CrittersProcess()
 							Chosen->Params[ST_CURRENT_AP] = max_ap;
 					}
 					Chosen->ApRegenerationTick = tick;
-					WriteLog("FOClient::CrittersProcess - REGEN TICKED WALK\tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u, regenFactor = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration, regenFactor);
+					//WriteLog("FOClient::CrittersProcess - REGEN TICKED WALK\tap<%u.%u> - gameTick = %u, apRegenTick = %u, gameOpt.ApRegen = %u, regenFactor = %u\n", Chosen->Params[ST_CURRENT_AP] / AP_DIVIDER, Chosen->Params[ST_CURRENT_AP] % AP_DIVIDER, Timer::GameTick(), Chosen->ApRegenerationTick, GameOpt.ApRegeneration, regenFactor);
 				}
 			}
 		}
@@ -8333,21 +8333,24 @@ label_EndMove:
 
             // Use
             CHECK_NEED_AP( ap_cost );
-
-            if( target_item && target_item->IsScenOrGrid() )
-                Net_SendUseItem( ap_cost, item_id, item_pid, rate, target_type, (target_item->GetHexX() << 16) | (target_item->GetHexY() & 0xFFFF), target_item->GetProtoId(), param );
-            else
-                Net_SendUseItem( ap_cost, item_id, item_pid, rate, target_type, target_id, 0, param );  // Item or critter
+			if (target_item && target_item->IsScenOrGrid()) {
+				Net_SendUseItem(ap_cost, item_id, item_pid, rate, target_type, (target_item->GetHexX() << 16) | (target_item->GetHexY() & 0xFFFF), target_item->GetProtoId(), param);
+			} else {
+				Net_SendUseItem(ap_cost, item_id, item_pid, rate, target_type, target_id, 0, param);  // Item or critter
+			}
 
             int usei = use;                                                                             // Avoid 'warning: comparison is always true due to limited range of data type' for GCC
-            if( usei >= USE_PRIMARY && use <= USE_THIRD )
+			if (usei >= USE_PRIMARY && use <= USE_THIRD)
                 Chosen->Action( CRITTER_ACTION_USE_WEAPON, rate, item );
             else if( use == USE_RELOAD )
                 Chosen->Action( CRITTER_ACTION_RELOAD_WEAPON, 0, item );
             else
                 Chosen->Action( CRITTER_ACTION_USE_ITEM, 0, item );
 
-            Chosen->SubAp( ap_cost );
+			//	 to allow animation canceling, AP cost will be subtracted AS side
+			if (!is_attack) {
+				Chosen->SubAp(ap_cost);
+			}
 
             if( is_attack && !aim && Keyb::ShiftDwn )           // Continue battle after attack
             {

@@ -400,7 +400,8 @@ public:
     bool IsLife()     { return Data.Cond == CRITTER_CONDITION_LIFE; }
     bool IsDead()     { return Data.Cond == CRITTER_CONDITION_DEAD; }
     bool IsKnockout() { return Data.Cond == CRITTER_CONDITION_KNOCKOUT; }
-    bool CheckFind( int find_type );
+	int GetCurrentAction() { return currentAction; }
+	bool CheckFind( int find_type );
     int  GetRealAp() { return Data.Params[ST_CURRENT_AP]; }
     int  GetAllAp()  { return GetParam( ST_CURRENT_AP ) + GetParam( ST_MOVE_AP ); }
     void SubAp( int val )

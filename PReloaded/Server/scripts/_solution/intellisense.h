@@ -568,6 +568,10 @@ class Critter
 	void AddHolodiskInfo(uint holodiskNum); // Arguments for this function have been guessed
 	void EraseHolodiskInfo(uint holodiskNum); // Arguments for this function have been guessed
 	bool IsHolodiskInfo(uint holodiskNum) const; // Arguments for this function have been guessed
+	int GetPlayerCurrentAction();
+	bool IsMoving();
+	bool IsWalking();
+	bool IsRunning();
 	bool IsLife() const;
 	bool IsKnockout() const;
 	bool IsDead() const;
